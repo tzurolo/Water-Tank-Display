@@ -210,7 +210,7 @@ void WaterLevelDisplay_task (void)
             } else {
                 // just a sample interval
                 SystemTime_futureTime(50, &time);
-                wldState = wlds_poweringDown;
+                wldState = wlds_done;
             }
             break;
         case wlds_waitingForConnection :
@@ -289,18 +289,15 @@ void WaterLevelDisplay_task (void)
             if (SystemTime_timeHasArrived(&time)) {
                 TCPIPConsole_disable(false);
                 CellularComm_Disable();
-                // give it another two seconds of power to properly close the connection
-                SystemTime_futureTime(200, &time);
+                // set a timeout for disable
+                SystemTime_futureTime(1000, &time);
                 wldState = wlds_waitingForCellularCommDisable;
             }
         case wlds_waitingForCellularCommDisable :
-            if (SystemTime_timeHasArrived(&time)) {
-                wldState = wlds_poweringDown;
-            }
-            break;
-        case wlds_poweringDown :
-            if (SystemTime_timeHasArrived(&time)) {
+            if ((!CellularComm_isEnabled()) ||
+                SystemTime_timeHasArrived(&time)) {
                 wldState = wlds_done;
+                Console_printP(PSTR("done"));
             }
             break;
         case wlds_done :

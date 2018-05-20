@@ -21,7 +21,6 @@ typedef enum WaterLevelDisplayState_enum {
     wlds_sendingReplyData,
     wlds_delayBeforeDisable,
     wlds_waitingForCellularCommDisable,
-    wlds_poweringDown,
     wlds_done
 } WaterLevelDisplayState;
 
