@@ -23,23 +23,10 @@ char EEMEM cellPIN[8]  = "7353";
 char tzPinP[]  PROGMEM = "7353"; // Tony's telestial Sim card PIN
 int16_t EEMEM tempCalOffset = 327;
 uint8_t EEMEM watchdogTimerCal = 100;
-uint8_t EEMEM batteryVoltageCal = 100;
 uint16_t EEMEM monitorTaskTimeout = 60;
 uint8_t EEMEM notification = 0;
-uint16_t EEMEM sampleInterval = 600;
 uint16_t EEMEM loggingUpdateInterval = 600;
 uint8_t EEMEM timeoutState = 0;
-
-// filter parameters
-uint8_t EEMEM filterSampleTime = 1;     // once per second
-uint8_t EEMEM numFilterSamples = 180;   // 3 minutes of samples
-uint16_t EEMEM filterVariance = 16383;  // effectively unlimited variance
-
-// tank parameters
-uint16_t EEMEM emptyDist = 290;
-uint16_t EEMEM fullDist = 30;
-uint8_t EEMEM lowNotification = 50;
-uint8_t EEMEM highNotification = 90;
 
 // internet
 //char EEMEM apn[40] = "mobiledata";    // T-Mobile
@@ -92,21 +79,13 @@ void EEPROMStorage_Initialize (void)
 
         EEPROMStorage_setTempCalOffset(325);
         EEPROMStorage_setWatchdogTimerCal(94);
-        EEPROMStorage_setBatteryVoltageCal(98);
         EEPROMStorage_setMonitorTaskTimeout(60);
 
-	EEPROMStorage_setWaterTankEmptyDistance(290);
-	EEPROMStorage_setWaterTankFullDistance(30);
-
-	EEPROMStorage_setWaterHighNotificationLevel(90);
-	EEPROMStorage_setWaterLowNotificationLevel(45);
-
-	EEPROMStorage_setNotification(false);
+        EEPROMStorage_setNotification(false);
 
         getCharStringSpanFromP(apnP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setAPN(&stringBufferSpan);
 
-        EEPROMStorage_setSampleInterval(600);
         EEPROMStorage_setLoggingUpdateInterval(600);
         EEPROMStorage_setThingspeak(false);
         getCharStringSpanFromP(thingspeakHostAddressP, &stringBuffer, &stringBufferSpan);
@@ -114,10 +93,6 @@ void EEPROMStorage_Initialize (void)
         EEPROMStorage_setThingspeakHostPort(80);
         getCharStringSpanFromP(thingspeakWriteKeyP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setThingspeakWriteKey(&stringBufferSpan);
-
-        EEPROMStorage_setFilterSampleTime(1);   // once per second
-        EEPROMStorage_setFilterSamples(180);    // 3 minutes of data at once per second
-        EEPROMStorage_setFilterVariance(16383); // effectively unlimited variance
 
         EEPROMStorage_setIPConsoleEnabled(false);
         getCharStringSpanFromP(tzHostAddressP, &stringBuffer, &stringBufferSpan);
@@ -196,17 +171,6 @@ uint8_t EEPROMStorage_watchdogTimerCal (void)
     return EEPROM_read((uint8_t*)&watchdogTimerCal);
 }
 
-void EEPROMStorage_setBatteryVoltageCal (
-    const uint8_t batCal)
-{
-    EEPROM_write((uint8_t*)&batteryVoltageCal, batCal);
-}
-
-uint8_t EEPROMStorage_batteryVoltageCal (void)
-{
-    return EEPROM_read((uint8_t*)&batteryVoltageCal);
-}
-
 void EEPROMStorage_setMonitorTaskTimeout (
     const uint16_t wlmTimeout)
 {
@@ -215,50 +179,6 @@ void EEPROMStorage_setMonitorTaskTimeout (
 uint16_t EEPROMStorage_monitorTaskTimeout (void)
 {
     return EEPROM_readWord((uint16_t*)&monitorTaskTimeout);
-}
-
-void EEPROMStorage_setWaterTankEmptyDistance (
-    const uint16_t value)
-{
-    EEPROM_writeWord(&emptyDist, value);
-}
-
-uint16_t EEPROMStorage_waterTankEmptyDistance (void)
-{
-    return EEPROM_readWord(&emptyDist);
-}
-
-void EEPROMStorage_setWaterTankFullDistance (
-    const uint16_t value)
-{
-    EEPROM_writeWord(&fullDist, value);
-}
-
-uint16_t EEPROMStorage_waterTankFullDistance (void)
-{
-    return EEPROM_readWord(&fullDist);
-}
-
-void EEPROMStorage_setWaterLowNotificationLevel (
-    const uint8_t level)
-{
-    EEPROM_write(&lowNotification, level);
-}
-
-uint8_t EEPROMStorage_waterLowNotificationLevel (void)
-{
-    return EEPROM_read(&lowNotification);
-}
-
-void EEPROMStorage_setWaterHighNotificationLevel (
-    const uint8_t level)
-{
-    EEPROM_write(&highNotification, level);
-}
-
-uint8_t EEPROMStorage_waterHighNotificationLevel (void)
-{
-    return EEPROM_read(&highNotification);
 }
 
 void EEPROMStorage_setNotification (
@@ -304,17 +224,6 @@ void EEPROMStorage_setCipqsend (
 uint8_t EEPROMStorage_cipqsend (void)
 {
     return EEPROM_read(&cipqsend);
-}
-
-void EEPROMStorage_setSampleInterval (
-    const uint16_t interval)
-{
-    EEPROM_writeWord(&sampleInterval, interval);
-}
-
-uint16_t EEPROMStorage_sampleInterval (void)
-{
-    return EEPROM_readWord(&sampleInterval);
 }
 
 void EEPROMStorage_setLoggingUpdateInterval (
@@ -372,39 +281,6 @@ void EEPROMStorage_getThingspeakWriteKey (
     CharString_t *writekey)
 {
     EEPROM_readString(thingspeakWriteKey, writekey);
-}
-
-void EEPROMStorage_setFilterSampleTime (
-    const uint8_t sampleTime)
-{
-    EEPROM_write(&filterSampleTime, sampleTime);
-}
-
-uint8_t EEPROMStorage_filterSampleTime (void)
-{
-    return EEPROM_read(&filterSampleTime);
-}
-
-void EEPROMStorage_setFilterSamples (
-    const uint8_t samples)
-{
-    EEPROM_write(&numFilterSamples, samples);
-}
-
-uint8_t EEPROMStorage_filterSamples (void)
-{
-    return EEPROM_read(&numFilterSamples);
-}
-
-void EEPROMStorage_setFilterVariance (
-    const uint16_t variance)
-{
-    EEPROM_writeWord(&filterVariance, variance);
-}
-
-uint16_t EEPROMStorage_filterVariance (void)
-{
-    return EEPROM_readWord(&filterVariance);
 }
 
 void EEPROMStorage_setIPConsoleEnabled (

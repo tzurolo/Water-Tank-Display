@@ -34,4 +34,7 @@ extern bool WaterLevelDisplay_taskIsDone (void);
 
 extern WaterLevelDisplayState WaterLeveDisplay_state (void);
 
+extern void WaterLevelDisplay_setDataFromHost (
+    const uint8_t waterLevelPct);
+
 #endif  // WATERLEVELDISPLAY_H

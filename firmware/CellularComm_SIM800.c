@@ -65,6 +65,7 @@ char smsCommandPrefix[]   PROGMEM = "ExeCmd:";
 typedef enum CellularCommState_enum {
     ccs_initial,
     ccs_disabling,
+    ccs_waitingForSIM800PowerDown,
     ccs_disabled,
     ccs_idle,
     ccs_waitingForOnkeyResponse,
@@ -465,6 +466,11 @@ void CellularComm_task (void)
             CellularTCPIP_Subtask();
             if (CellularTCPIP_connectionStatus() == cs_disconnected) {
                 powerDownCellularModule();
+                ccState = ccs_waitingForSIM800PowerDown;
+            }
+            break;
+        case ccs_waitingForSIM800PowerDown :
+            if (SIM800_status() == SIM800_ms_off) {
                 ccState = ccs_disabled;
             }
             break;

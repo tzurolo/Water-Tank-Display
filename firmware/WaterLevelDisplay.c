@@ -50,10 +50,9 @@ static SystemTime_t nextConnectTime;
 static SystemTime_t time;   // used to measure how long it took to get a connection,
                             // and for the powerdown delay future time
 static bool gotCommandFromHost;
-static SystemTime_t lastSampleTime;
+static SystemTime_t connectStartTime;
 static CharStringSpan_t remainingReplyDataToSend;
-static WaterLevelState currentWaterLevelState;
-static uint8_t currentWaterLevelPercent;
+static uint8_t latestWaterLevelPercent;
 
 #define DATA_SENDER_BUFFER_LEN 30
 
@@ -79,7 +78,7 @@ static bool sampleDataSender (void)
         StringUtils_appendDecimal(CellularComm_SignalQuality(), 1, 0, &dataToSend);
         SystemTime_t curTime;
         SystemTime_getCurrentTime(&curTime);
-        const int32_t secondsSinceLastSample = SystemTime_diffSec(&curTime, &lastSampleTime);
+        const int32_t secondsSinceLastSample = SystemTime_diffSec(&curTime, &connectStartTime);
         CharString_appendP(PSTR("C"), &dataToSend);
         StringUtils_appendDecimal(secondsSinceLastSample, 1, 0, &dataToSend);
         CharString_appendC(';', &dataToSend);
@@ -183,7 +182,6 @@ void WaterLevelDisplay_Initialize (void)
 {
     wldState = wlds_initial;
     commandMode = cpm_singleCommand;
-    currentWaterLevelState = wl_inRange;
     gotCommandFromHost = false;
 }
 
@@ -199,6 +197,7 @@ void WaterLevelDisplay_task (void)
         case wlds_resuming :
             // determine if it's time to contact server
             if (SystemTime_timeHasArrived(&nextConnectTime)) {
+                SystemTime_getCurrentTime(&connectStartTime);
                 enableTCPIP();
                 Console_printP(PSTR("time to connect"));
                 wldState = wlds_waitingForSensorData;
@@ -300,16 +299,22 @@ void WaterLevelDisplay_task (void)
                 Console_printP(PSTR("done"));
             }
             break;
-        case wlds_done :
-            SystemTime_applyTimeAdjustment();
+        case wlds_done : {
+            SystemTime_t curTime;
+            SystemTime_getCurrentTime(&curTime);
+            if (curTime.seconds < 200) {
+                // we don't have server time yet - set it now
+                // otherwise we will set it upon daily reboot
+                SystemTime_applyTimeAdjustment();
+            }
             // determine when to contact host
             const uint16_t loggingInterval = EEPROMStorage_LoggingUpdateInterval();
-            SystemTime_t curTime;
             SystemTime_getCurrentTime(&curTime);
             nextConnectTime.seconds =
                 (((curTime.seconds + (loggingInterval / 2)) / loggingInterval) + 1) * loggingInterval;
             nextConnectTime.hundredths = 0;
             wldState = wlds_resuming;
+            }
             break;
     }
 }
@@ -324,3 +329,13 @@ WaterLevelDisplayState WaterLevelDisplay_state (void)
     return wldState;
 }
 
+void WaterLevelDisplay_setDataFromHost (
+    const uint8_t waterLevelPct)
+{
+    latestWaterLevelPercent = waterLevelPct;
+    CharString_define(40, msg);
+    CharString_copyP(PSTR("Water Level: "), &msg);
+    StringUtils_appendDecimal(waterLevelPct, 1, 0, &msg);
+    CharString_appendC('%', &msg);
+    Console_printCS(&msg);
+}

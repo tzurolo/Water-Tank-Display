@@ -45,34 +45,10 @@ extern void EEPROMStorage_setWatchdogTimerCal (
     const uint8_t wdtCal);
 extern uint8_t EEPROMStorage_watchdogTimerCal (void);
 
-// battery voltage calibration. unts are 1%
-extern void EEPROMStorage_setBatteryVoltageCal (
-    const uint8_t batCal);
-extern uint8_t EEPROMStorage_batteryVoltageCal (void);
-
 // water level monitor task timeout. units are seconds
 extern void EEPROMStorage_setMonitorTaskTimeout (
     const uint16_t wlmTimeout);
 extern uint16_t EEPROMStorage_monitorTaskTimeout (void);
-
-// distance from the water level sensor transducer to the
-// bottom of the tank when it is empty. units are cm
-extern void EEPROMStorage_setWaterTankEmptyDistance (
-    const uint16_t value);
-extern uint16_t EEPROMStorage_waterTankEmptyDistance (void);
-// distance from the water level sensor transducer to the
-// surface of the water when the tank is full. units are cm
-extern void EEPROMStorage_setWaterTankFullDistance (
-    const uint16_t value);
-extern uint16_t EEPROMStorage_waterTankFullDistance (void);
-
-// units are percent (tank percent full)
-extern void EEPROMStorage_setWaterLowNotificationLevel (
-    const uint8_t level);
-extern uint8_t EEPROMStorage_waterLowNotificationLevel (void);
-extern void EEPROMStorage_setWaterHighNotificationLevel (
-    const uint8_t level);
-extern uint8_t EEPROMStorage_waterHighNotificationLevel (void);
 
 extern void EEPROMStorage_setNotification (
     const bool onOff);
@@ -91,9 +67,6 @@ extern void EEPROMStorage_setCipqsend (
     const uint8_t qsend);
 extern uint8_t EEPROMStorage_cipqsend (void);
 
-extern void EEPROMStorage_setSampleInterval (
-    const uint16_t updateInterval); // in seconds
-extern uint16_t EEPROMStorage_sampleInterval (void);
 extern void EEPROMStorage_setLoggingUpdateInterval (
     const uint16_t updateInterval); // in seconds
 extern uint16_t EEPROMStorage_LoggingUpdateInterval (void);
@@ -116,19 +89,6 @@ extern void EEPROMStorage_setThingspeakWriteKey (
     const CharStringSpan_t *writekey);
 extern void EEPROMStorage_getThingspeakWriteKey (
     CharString_t *writekey);
-
-// sample time in seconds
-extern void EEPROMStorage_setFilterSampleTime (
-    const uint8_t sampleTime);
-extern uint8_t EEPROMStorage_filterSampleTime (void);
-// number of samples to include in filter calculation
-extern void EEPROMStorage_setFilterSamples (
-    const uint8_t samples);
-extern uint8_t EEPROMStorage_filterSamples (void);
-// sample variance is in units of cm H2O
-extern void EEPROMStorage_setFilterVariance (
-    const uint16_t variance);
-extern uint16_t EEPROMStorage_filterVariance (void);
 
 extern void EEPROMStorage_setIPConsoleEnabled (
     const bool enabled);

@@ -20,6 +20,7 @@
 #include "Console.h"
 #include "EEPROM_Util.h"
 #include "EEPROMStorage.h"
+#include "WaterLevelDisplay.h"
 #include "StringUtils.h"
 #include "UART_async.h"
 
@@ -182,6 +183,15 @@ bool CommandProcessor_executeCommand (
         if (!CharStringSpan_isEmpty(&statusToNumber)) {
             //CellularComm_setOutgoingSMSMessageNumber(&statusToNumber);
         }
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("data"))) {
+        const uint8_t waterLevel = scanIntegerToken(&cmd, &validCommand);
+        if (validCommand) {
+            WaterLevelDisplay_setDataFromHost(waterLevel);
+            const uint32_t serverTime = scanIntegerU32Token(&cmd, &validCommand);
+            if (validCommand && (serverTime != 0)) {
+                SystemTime_setTimeAdjustment(&serverTime);
+            }
+        }
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("tset"))) {
         const uint32_t serverTime = scanIntegerU32Token(&cmd, &validCommand);
         if (validCommand && (serverTime != 0)) {
@@ -203,11 +213,6 @@ bool CommandProcessor_executeCommand (
             const uint8_t wdtCal = scanIntegerToken(&cmd, &validCommand);
             if (validCommand) {
                 EEPROMStorage_setWatchdogTimerCal(wdtCal);
-            }
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, batCalP)) {
-            const uint8_t batCal = scanIntegerToken(&cmd, &validCommand);
-            if (validCommand) {
-                EEPROMStorage_setBatteryVoltageCal(batCal);
             }
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, wlmTimeoutP)) {
             const uint16_t wlmTimeout = scanIntegerToken(&cmd, &validCommand);
@@ -236,25 +241,10 @@ bool CommandProcessor_executeCommand (
                 EEPROMStorage_setIPConsoleServerAddress(&cmdToken);
                 EEPROMStorage_setIPConsoleServerPort(ipPort);
             }
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, sampleIntervalP)) {
-            const uint16_t sampleInterval = scanIntegerToken(&cmd, &validCommand);
-            if (validCommand) {
-                EEPROMStorage_setSampleInterval(sampleInterval);
-            }
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, logIntervalP)) {
             const uint16_t loggingInterval = scanIntegerToken(&cmd, &validCommand);
             if (validCommand) {
-                EEPROMStorage_setSampleInterval(loggingInterval);
-            }
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("empty"))) {
-            const uint16_t emptyDistance = scanIntegerToken(&cmd, &validCommand);
-            if (validCommand) {
-                EEPROMStorage_setWaterTankEmptyDistance(emptyDistance);
-            }
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("full"))) {
-            const uint16_t fullDistance = scanIntegerToken(&cmd, &validCommand);
-            if (validCommand) {
-                EEPROMStorage_setWaterTankFullDistance(fullDistance);
+                EEPROMStorage_setLoggingUpdateInterval(loggingInterval);
             }
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, thingspeakP)) {
             StringUtils_scanToken(&cmd, &cmdToken);
@@ -293,8 +283,6 @@ bool CommandProcessor_executeCommand (
             makeJSONIntValue(tCalOffsetP, EEPROMStorage_tempCalOffset(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, wdtCalP)) {
             makeJSONIntValue(wdtCalP, EEPROMStorage_watchdogTimerCal(), reply);
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, batCalP)) {
-            makeJSONIntValue(batCalP, EEPROMStorage_batteryVoltageCal(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, wlmTimeoutP)) {
             makeJSONIntValue(wlmTimeoutP, EEPROMStorage_monitorTaskTimeout(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, rebootP)) {
@@ -303,20 +291,12 @@ bool CommandProcessor_executeCommand (
             makeJSONStrValue(apnP, EEPROMStorage_getAPN, reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, cipqsendP)) {
             makeJSONIntValue(cipqsendP, EEPROMStorage_cipqsend(), reply);
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("distance"))) {
-            beginJSON(reply);
-            appendJSONIntValue(PSTR("empty"), EEPROMStorage_waterTankEmptyDistance(), reply);
-            continueJSON(reply);
-            appendJSONIntValue(PSTR("full"), EEPROMStorage_waterTankFullDistance(), reply);
-            endJSON(reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, ipserverP)) {
             beginJSON(reply);
             appendJSONStrValue(PSTR("IP_Addr"), EEPROMStorage_getIPConsoleServerAddress, reply);
             continueJSON(reply);
             appendJSONIntValue(PSTR("IP_Port"), EEPROMStorage_ipConsoleServerPort(), reply);
             endJSON(reply);
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, sampleIntervalP)) {
-            makeJSONIntValue(sampleIntervalP, EEPROMStorage_sampleInterval(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, logIntervalP)) {
             makeJSONIntValue(logIntervalP, EEPROMStorage_LoggingUpdateInterval(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, thingspeakP)) {
@@ -348,16 +328,6 @@ bool CommandProcessor_executeCommand (
             EEPROMStorage_setNotification(true);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, offP)) {
             EEPROMStorage_setNotification(false);
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("low"))) {
-            const uint16_t level = scanIntegerToken(&cmd, &validCommand);
-            if (validCommand) {
-                EEPROMStorage_setWaterLowNotificationLevel(level);
-            }
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("high"))) {
-            const uint16_t level = scanIntegerToken(&cmd, &validCommand);
-            if (validCommand) {
-                EEPROMStorage_setWaterHighNotificationLevel(level);
-            }
         } else {
             validCommand = false;
         }
