@@ -60,6 +60,8 @@ void CommandProcessor_createStatusMessage (
         CharString_appendC('.', msg);
         StringUtils_appendDecimal(CellularTCPIP_state(), 2, 0, msg);
     }
+    CharString_appendC(',', msg);
+    StringUtils_appendDecimal(WaterLevelDisplay_state(), 1, 0, msg);
     CharString_appendP(PSTR(",Vc:"), msg);
     StringUtils_appendDecimal(CellularComm_batteryMillivolts(), 1, 3, msg);
     CharString_appendP(PSTR(",r:"), msg);

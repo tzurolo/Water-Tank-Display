@@ -1,7 +1,7 @@
 //
 //  System Time
 //
-//  Uses AtMega328P 16 bit timer/counter 1
+//  Uses AtMega32u4 Timer/Counter 3
 //
 #include "SystemTime.h"
 
@@ -38,13 +38,13 @@ void SystemTime_Initialize (void)
         : lrb_hardware;
     notificationFunction = 0;
 
-    // set up timer1 to fire interrupt at SYSTEMTIME_TICKS_PER_SECOND
-    TCCR1B = (TCCR1B & 0xF8) | 2; // prescale by 8
-    TCCR1B = (TCCR1B & 0xE7) | (1 << 3); // set CTC mode
-    OCR1A = (F_CPU / 8) / SYSTEMTIME_TICKS_PER_SECOND;
-    TCNT1 = 0;  // start the time counter at 0
-    TIFR1 |= (1 << OCF1A);  // "clear" the timer compare flag
-    TIMSK1 |= (1 << OCIE1A);// enable timer compare match interrupt
+    // set up timer3 to fire interrupt at SYSTEMTIME_TICKS_PER_SECOND
+    TCCR3B = (TCCR3B & 0xF8) | 2; // prescale by 8
+    TCCR3B = (TCCR3B & 0xE7) | (1 << 3); // set CTC mode
+    OCR3A = (F_CPU / 8) / SYSTEMTIME_TICKS_PER_SECOND;
+    TCNT3 = 0;  // start the time counter at 0
+    TIFR3 |= (1 << OCF3A);  // "clear" the timer compare flag
+    TIMSK3 |= (1 << OCIE3A);// enable timer compare match interrupt
 }
 
 void SystemTime_registerForTickNotification (
@@ -211,7 +211,7 @@ void SystemTime_task (void)
 //        LED_OUTPORT |= (1 << LED_PIN);
     } else {
         wdt_reset();
-
+#if 0
         // reboot if it's been more than the stored reboot interval plus 3 logging intervals
         // since startup
         const uint32_t uptime = SystemTime_uptime();
@@ -221,6 +221,7 @@ void SystemTime_task (void)
         if (uptime > rebootIntervalSeconds) {
             SystemTime_commenceShutdown();
         }
+#endif
     }
 }
 
@@ -268,7 +269,7 @@ void SystemTime_appendToString (
     StringUtils_appendDecimal(SystemTime_seconds(time), 2, 0, timeString);
 }
 
-ISR(TIMER1_COMPA_vect, ISR_BLOCK)
+ISR(TIMER3_COMPA_vect, ISR_BLOCK)
 {
     ++tickCounter;
     if (tickCounter >= (SYSTEMTIME_TICKS_PER_SECOND / 100)) {

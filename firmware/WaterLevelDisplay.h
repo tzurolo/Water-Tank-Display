@@ -12,7 +12,7 @@
 
 typedef enum WaterLevelDisplayState_enum {
     wlds_initial,
-    wlds_resuming,
+    wlds_waitingForNextConnectTime,
     wlds_waitingForSensorData,
     wlds_waitingForConnection,
     wlds_sendingSampleData,
@@ -32,7 +32,7 @@ extern void WaterLevelDisplay_task (void);
 
 extern bool WaterLevelDisplay_taskIsDone (void);
 
-extern WaterLevelDisplayState WaterLeveDisplay_state (void);
+extern WaterLevelDisplayState WaterLevelDisplay_state (void);
 
 extern void WaterLevelDisplay_setDataFromHost (
     const uint8_t waterLevelPct);

@@ -192,9 +192,9 @@ void WaterLevelDisplay_task (void)
 //            wldState = (SystemTime_LastReboot() == lrb_software)
 //                ? wlds_done         // starting up after software reboot
 //                : wlds_resuming;    // hardware reboot
-            wldState = wlds_resuming;
+            wldState = wlds_waitingForNextConnectTime;
             break;
-        case wlds_resuming :
+        case wlds_waitingForNextConnectTime :
             // determine if it's time to contact server
             if (SystemTime_timeHasArrived(&nextConnectTime)) {
                 SystemTime_getCurrentTime(&connectStartTime);
@@ -292,6 +292,7 @@ void WaterLevelDisplay_task (void)
                 SystemTime_futureTime(1000, &time);
                 wldState = wlds_waitingForCellularCommDisable;
             }
+            break;
         case wlds_waitingForCellularCommDisable :
             if ((!CellularComm_isEnabled()) ||
                 SystemTime_timeHasArrived(&time)) {
@@ -313,7 +314,7 @@ void WaterLevelDisplay_task (void)
             nextConnectTime.seconds =
                 (((curTime.seconds + (loggingInterval / 2)) / loggingInterval) + 1) * loggingInterval;
             nextConnectTime.hundredths = 0;
-            wldState = wlds_resuming;
+            wldState = wlds_waitingForNextConnectTime;
             }
             break;
     }
