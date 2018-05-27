@@ -15,6 +15,7 @@
 #include "EEPROMStorage.h"
 
 #define DEBUG_TRACE 1
+#define MAX_TICK_NOTIFICATION_FUNCTIONS 2
 
 static volatile uint16_t tickCounter = 0;
 static volatile SystemTime_t currentTime;
@@ -22,7 +23,8 @@ static volatile uint32_t secondsSinceStartup;
 static int32_t timeAdjustment;
 static bool shuttingDown = false;
 static SystemTime_LastRebootBy lastRebootBy;
-static SystemTime_TickNotification notificationFunction;
+static uint8_t numNotificationFunctions;
+static SystemTime_TickNotification notificationFunctions[MAX_TICK_NOTIFICATION_FUNCTIONS];
 
 void SystemTime_Initialize (void)
 {
@@ -36,7 +38,7 @@ void SystemTime_Initialize (void)
     lastRebootBy = (currentTime.seconds > 1)
         ? lrb_software
         : lrb_hardware;
-    notificationFunction = 0;
+    numNotificationFunctions = 0;
 
     // set up timer3 to fire interrupt at SYSTEMTIME_TICKS_PER_SECOND
     TCCR3B = (TCCR3B & 0xF8) | 2; // prescale by 8
@@ -50,7 +52,9 @@ void SystemTime_Initialize (void)
 void SystemTime_registerForTickNotification (
     SystemTime_TickNotification notificationFcn)
 {
-    notificationFunction = notificationFcn;
+    if (numNotificationFunctions < MAX_TICK_NOTIFICATION_FUNCTIONS) {
+        notificationFunctions[numNotificationFunctions++] = notificationFcn;
+    }
 }
 
 void SystemTime_getCurrentTime (
@@ -282,10 +286,9 @@ ISR(TIMER3_COMPA_vect, ISR_BLOCK)
         }
     }
 
-    if (notificationFunction != NULL) {
-        notificationFunction();
+    for (int f = 0; f < numNotificationFunctions; ++f) {
+        notificationFunctions[f]();
     }
-
 }
 
 ISR(WDT_vect, ISR_BLOCK)
