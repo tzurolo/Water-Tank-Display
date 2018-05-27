@@ -26,6 +26,8 @@ SRC          = $(TARGET).c Descriptors.c \
                Console.c \
                CommandProcessor.c \
                WaterLevelDisplay.c \
+               TFT_HXD8357D.c \
+               PowerMonitor.c \
                SystemTime.c \
                SoftwareSerialTx.c \
                SoftwareSerialRx0.c \
@@ -35,6 +37,7 @@ SRC          = $(TARGET).c Descriptors.c \
                IOPortBitField.c \
                MessageIDQueue.c \
                ByteQueue.c \
+               SPIAsync.c \
                StringUtils.c \
                CharString.c \
                CharStringSpan.c \

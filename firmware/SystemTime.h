@@ -35,6 +35,7 @@ typedef void (*SystemTime_TickNotification)(void);
 
 extern void SystemTime_Initialize (void);
 
+// up to 2 clients can register
 extern void SystemTime_registerForTickNotification (
     SystemTime_TickNotification notificationFcn);
 
