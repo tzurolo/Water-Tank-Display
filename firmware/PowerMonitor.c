@@ -15,6 +15,7 @@
 //
 //  Pin usage:
 //     PF4 - input from optoisolator
+//     PF5 - input from USB pin voltage divider
 //
 #include "PowerMonitor.h"
 

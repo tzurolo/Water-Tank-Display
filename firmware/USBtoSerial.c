@@ -47,6 +47,7 @@
 #include "TCPIPConsole.h"
 #include "TFT_HXD8357D.h"
 #include "PowerMonitor.h"
+#include "SDCard.h"
 #include "SoftwareSerialRx0.h"
 #include "SoftwareSerialTx.h"
 #include "WaterLevelDisplay.h"
@@ -71,6 +72,7 @@ void Initialize (void)
     TCPIPConsole_Initialize();
     TFT_HXD8357D_Initialize();
     PowerMonitor_Initialize();
+    SDCard_Initialize();
     RAMSentinel_Initialize();
     USBTerminal_Initialize();
     WaterLevelDisplay_Initialize();
@@ -98,7 +100,7 @@ int main(void)
         TCPIPConsole_task();
         CellularComm_task();
         PowerMonitor_task();
-//        WaterLevelDisplay_task();
+        WaterLevelDisplay_task();
     }
 
     return 0;

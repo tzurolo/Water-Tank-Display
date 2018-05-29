@@ -25,6 +25,7 @@
 #include "UART_async.h"
 #include "TFT_HXD8357D.h"
 #include "PowerMonitor.h"
+#include "SDCard.h"
 
 // beginning of tft display prototyping
 #include <avr/io.h>
@@ -244,6 +245,8 @@ void CommandProcessor_createStatusMessage (
     StringUtils_appendDecimal(PowerMonitor_mainsOn(), 1, 0, msg);
     CharString_appendP(PSTR(",p:"), msg);
     StringUtils_appendDecimal(PowerMonitor_pumpOn(), 1, 0, msg);
+    CharString_appendP(PSTR(",sd:"), msg);
+    StringUtils_appendDecimal(SDCard_isPresent(), 1, 0, msg);
     CharString_appendP(PSTR("  "), msg);
 }
 
