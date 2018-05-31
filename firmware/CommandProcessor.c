@@ -33,7 +33,7 @@
 #include "SPIAsync.h"
 
 #define DC_OUTPORT  PORTB
-#define DC_PIN      PB6
+#define DC_PIN      PB7
 #define DC_DIR      DDRB
 
 #define SS_SETUP_TIME 10

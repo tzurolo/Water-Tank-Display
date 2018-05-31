@@ -6,7 +6,7 @@
 
 //  I/O Pin usage
 //      D2        -> Power Status (optional)
-//      D6        -> OnKey
+//      F1        -> OnKey
 //      Tx pin specified from SIM800_Initialize
 //      Rx pin not specified here, input comes from rxQ from SIM800_Initialize
 //
@@ -26,9 +26,9 @@
 
 #define TX_CHAN_INDEX 0
 
-#define ONKEY_PIN           PD6
-#define ONKEY_OUTPORT       PORTD
-#define ONKEY_DIR           DDRD
+#define ONKEY_PIN           PF1
+#define ONKEY_OUTPORT       PORTF
+#define ONKEY_DIR           DDRF
 
 #define POWERSTATE_PIN      PD2
 #define POWERSTATE_INPORT   PIND

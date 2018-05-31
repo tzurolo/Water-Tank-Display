@@ -9,12 +9,12 @@
 #define CARDCS_DDR        DDRF
 #define CARDCS_INPORT     PINF
 #define CARDCS_OUTPORT    PORTF
-#define CARDCS_PIN        PF6
+#define CARDCS_PIN        PF7
 
 #define CARDDETECT_DDR        DDRF
 #define CARDDETECT_INPORT     PINF
 #define CARDDETECT_OUTPORT    PORTF
-#define CARDDETECT_PIN        PF7
+#define CARDDETECT_PIN        PF6
 
 void SDCard_Initialize (void)
 {

@@ -5,10 +5,10 @@
 
 #include "SPIAsync.h"
 
-// on Adafruit Feather Fona the usual SS pin (PB0) is not available. Using PB7
-#define SS_OUTPORT  PORTB
-#define SS_PIN      PB7
-#define SS_DIR      DDRB
+// on Adafruit Feather Fona the usual SS pin (PB0) is not available. Using PD6
+#define SS_OUTPORT  PORTD
+#define SS_PIN      PD6
+#define SS_DIR      DDRD
 
 
 void SPIAsync_init (const uint16_t options)

@@ -16,7 +16,7 @@
 //     SCK pin (PB1)
 //     MOSI pin (PB2)
 //     MISO pin (PB3)
-//     Normally uses PB0 as SS, but PB0 is not available on the Feather Fona, so using PB7
+//     Normally uses PB0 as SS, but PB0 is not available on the Feather Fona, so using PD6
 //
 #ifndef SPIASYNC_H
 #define SPIASYNC_H
