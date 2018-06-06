@@ -49,27 +49,3 @@ void SPIAsync_deassertSS (void)
     SS_OUTPORT |= (1 << SS_PIN);
 }
 
-void SPIAsync_sendByte (
-    const uint8_t byte)
-{
-    // Start transmission
-    SPDR = byte;
-}
-
-void SPIAsync_requestByte (void)
-{
-    // Send dummy byte to get return byte
-    SPDR = 0;
-}
-
-uint8_t SPIAsync_getByte (void)
-{
-    return SPDR;
-}
-
-// call this function after SPI_sendByte or SPI_requestByte to determine
-// if the operation has completed
-bool SPIAsync_operationCompleted (void)
-{
-    return (SPSR & (1<<SPIF));
-}

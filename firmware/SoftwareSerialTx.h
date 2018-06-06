@@ -17,7 +17,9 @@
 #include "IOPortBitfield.h"
 #include "ByteQueue.h"
 
-extern void SoftwareSerialTx_Initialize (
+extern void SoftwareSerialTx_Initialize (void);
+
+extern void SoftwareSerialTx_open (
     const uint8_t channelIndex,
     const IOPortBitfield_PortSelection port,
     const uint8_t pin);

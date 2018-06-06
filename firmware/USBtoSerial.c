@@ -66,6 +66,7 @@ void Initialize (void)
     EEPROMStorage_Initialize();
     SystemTime_Initialize();
     SoftwareSerialRx0_Initialize();
+    SoftwareSerialTx_Initialize();
     Console_Initialize();
     CellularComm_Initialize();
     CellularTCPIP_Initialize();
@@ -101,6 +102,7 @@ int main(void)
         CellularComm_task();
         PowerMonitor_task();
         WaterLevelDisplay_task();
+        TFT_HXD8357D_task();
     }
 
     return 0;

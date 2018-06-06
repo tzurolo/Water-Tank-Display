@@ -24,7 +24,19 @@
 #include <string.h>
 #include <stddef.h>
 
+// Color definitions
+#define	HX8357_BLACK   0x0000
+#define	HX8357_BLUE    0x001F
+#define	HX8357_RED     0xF800
+#define	HX8357_GREEN   0x07E0
+#define HX8357_CYAN    0x07FF
+#define HX8357_MAGENTA 0xF81F
+#define HX8357_YELLOW  0xFFE0  
+#define HX8357_WHITE   0xFFFF
+
 extern void TFT_HXD8357D_Initialize (void);
+
+extern void TFT_HXD8357D_task (void);
 
 // 0 is backlight off, 1-9 is increasing levels brightness, 10 is full on
 extern void TFT_HXD8357D_setBacklightBrightness (

@@ -26,9 +26,17 @@ static SystemTime_LastRebootBy lastRebootBy;
 static uint8_t numNotificationFunctions;
 static SystemTime_TickNotification notificationFunctions[MAX_TICK_NOTIFICATION_FUNCTIONS];
 
+static volatile uint8_t taskTickCounter;
+static uint8_t minTaskTickCounter;
+static uint8_t maxTaskTickCounter;
+
 void SystemTime_Initialize (void)
 {
     tickCounter = 0;
+
+    taskTickCounter = 0;
+    SystemTime_resetTaskTickRange();
+
     currentTime.seconds = EEPROMStorage_lastRebootTimeSec();
     currentTime.hundredths = 0;
     EEPROMStorage_setLastRebootTimeSec(0);
@@ -210,6 +218,25 @@ bool SystemTime_shuttingDown (void)
 
 void SystemTime_task (void)
 {
+    uint8_t localTaskTickCounter;
+    do {
+    char SREGSave = SREG;
+    cli();
+    localTaskTickCounter = taskTickCounter;
+    SREG = SREGSave;
+    } while (localTaskTickCounter < 50);
+
+    char SREGSave = SREG;
+    cli();
+    taskTickCounter = 0;
+    SREG = SREGSave;
+
+    if (localTaskTickCounter > maxTaskTickCounter) {
+        maxTaskTickCounter = localTaskTickCounter;
+    } else if (localTaskTickCounter < minTaskTickCounter) {
+        minTaskTickCounter = localTaskTickCounter;
+    }
+
     // reset the watchdog timer
     if (shuttingDown) {
 //        LED_OUTPORT |= (1 << LED_PIN);
@@ -227,6 +254,20 @@ void SystemTime_task (void)
         }
 #endif
     }
+}
+
+void SystemTime_getTaskTickRange (
+    uint8_t *minTicks,
+    uint8_t *maxTicks)
+{
+    *minTicks = minTaskTickCounter;
+    *maxTicks = maxTaskTickCounter;
+}
+
+void SystemTime_resetTaskTickRange (void)
+{
+    minTaskTickCounter = 255;
+    maxTaskTickCounter = 0;
 }
 
 uint8_t SystemTime_dayOfWeek (
@@ -276,6 +317,7 @@ void SystemTime_appendToString (
 ISR(TIMER3_COMPA_vect, ISR_BLOCK)
 {
     ++tickCounter;
+    if (taskTickCounter < 255) ++taskTickCounter;
     if (tickCounter >= (SYSTEMTIME_TICKS_PER_SECOND / 100)) {
         tickCounter = 0;
         ++currentTime.hundredths;

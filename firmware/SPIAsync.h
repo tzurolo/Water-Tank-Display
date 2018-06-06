@@ -67,13 +67,21 @@ extern void SPIAsync_deassertSS (void);
 // determine if the transmission has been completed.
 // Note that this will also read a byte from the slave device - after
 // transmission has completed you can call SPIAsync_readByte.
-extern void SPIAsync_sendByte (
-    const uint8_t byte);
+inline void SPIAsync_sendByte (
+    const uint8_t byte)
+{
+    // Start transmission
+    SPDR = byte;
+}
 
 // requests one byte asynchronously. Call SPIAsync_operationCompleted to
 // determine if the byte has been received. When it returns true then
 // call SPIAsync_readByte to get the data
-extern void SPIAsync_requestByte (void);
+inline void SPIAsync_requestByte (void)
+{
+    // Send dummy byte to get return byte
+    SPDR = 0;
+}
 
 // reads the SPI data register after a byte has been received. Before
 // calling this function you must first call SPIAsync_requestByte
@@ -81,10 +89,17 @@ extern void SPIAsync_requestByte (void);
 //   SPIAsync_requestByte();
 //   while (!SPIAsync_operationCompleted()); // wait for byte
 //   uint8_t readData = SPIAsync_getByte()
-extern uint8_t SPIAsync_getByte (void);
+inline uint8_t SPIAsync_getByte (void)
+{
+    return SPDR;
+}
+
 
 // call this function after SPI_sendByte or SPI_requestByte to determine
 // if the operation has completed
-extern bool SPIAsync_operationCompleted (void);
+inline bool SPIAsync_operationCompleted (void)
+{
+    return (SPSR & (1<<SPIF)) != 0;
+}
 
 #endif  // SPIASYNC

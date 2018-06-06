@@ -118,14 +118,10 @@
 #define HX8357_YELLOW  0xFFE0  
 #define HX8357_WHITE   0xFFFF
 
-static uint8_t maxWaitCycles = 0;
-
 void spiWrite (const uint8_t byte)
 {
     SPIAsync_sendByte(byte);
-    uint8_t waitCycles = 0;
-    while (!SPIAsync_operationCompleted()) ++waitCycles;
-    if (waitCycles > maxWaitCycles) maxWaitCycles = waitCycles;
+    while (!SPIAsync_operationCompleted());
 }
 
 void spiWrite16 (const uint16_t word)
@@ -146,11 +142,6 @@ void writeCommand (const uint8_t cmd)
     DC_OUTPORT &= ~(1 << DC_PIN);
     spiWrite(cmd);
     DC_OUTPORT |= (1 << DC_PIN);
-}
-
-void delay (const uint16_t ms)
-{
-    _delay_ms(ms);
 }
 
 void fillRect (
@@ -189,9 +180,14 @@ void fillRect (
     uint8_t hi = color >> 8, lo = color;
     uint32_t len = ((uint32_t)w) * h;
     for (uint32_t t=len; t; --t){
-        spiWrite(hi);
-        spiWrite(lo);
+//        spiWrite(hi);
+//        spiWrite(lo);
+        while (!SPIAsync_operationCompleted());
+        SPIAsync_sendByte(hi);
+        while (!SPIAsync_operationCompleted());
+        SPIAsync_sendByte(lo);
     }
+        while (!SPIAsync_operationCompleted());
     SPIAsync_deassertSS();
 }
 
@@ -245,8 +241,14 @@ void CommandProcessor_createStatusMessage (
     StringUtils_appendDecimal(PowerMonitor_mainsOn(), 1, 0, msg);
     CharString_appendP(PSTR(",p:"), msg);
     StringUtils_appendDecimal(PowerMonitor_pumpOn(), 1, 0, msg);
-    CharString_appendP(PSTR(",sd:"), msg);
-    StringUtils_appendDecimal(SDCard_isPresent(), 1, 0, msg);
+    CharString_appendP(PSTR(",T:"), msg);
+    uint8_t minTicks;
+    uint8_t maxTicks;
+    SystemTime_getTaskTickRange(&minTicks, &maxTicks);
+    StringUtils_appendDecimal(minTicks, 1, 0, msg);
+    CharString_appendC('-', msg);
+    StringUtils_appendDecimal(maxTicks, 1, 0, msg);
+    SystemTime_resetTaskTickRange();
     CharString_appendP(PSTR("  "), msg);
 }
 
@@ -365,127 +367,6 @@ bool CommandProcessor_executeCommand (
             //CellularComm_setOutgoingSMSMessageNumber(&statusToNumber);
         }
 
-    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("xi"))) {
-        SPIAsync_init(
-            SPIAsync_MODE_MASTER |
-            SPIAsync_SPEED_FOSC_DIV_4 |
-            SPIAsync_SCK_LEAD_RISING |
-            SPIAsync_SCK_LEAD_SAMPLE |
-            SPIAsync_ORDER_MSB_FIRST
-            );
-        DC_OUTPORT |= (1 << DC_PIN);
-        DC_DIR  |= (1 << DC_PIN);
-
-        SPIAsync_assertSS();
-        _delay_us(SS_SETUP_TIME);
-        writeCommand(HX8357_SWRESET);
-
-    delay(10);
-    // setextc
-    writeCommand(HX8357D_SETC);
-    spiWrite(0xFF);
-    spiWrite(0x83);
-    spiWrite(0x57);
-    delay(300);
-
-    // setRGB which also enables SDO
-    writeCommand(HX8357_SETRGB); 
-    spiWrite(0x80);  //enable SDO pin!
-//    spiWrite(0x00);  //disable SDO pin!
-    spiWrite(0x0);
-    spiWrite(0x06);
-    spiWrite(0x06);
-
-    writeCommand(HX8357D_SETCOM);
-    spiWrite(0x25);  // -1.52V
-    
-    writeCommand(HX8357_SETOSC);
-    spiWrite(0x68);  // Normal mode 70Hz, Idle mode 55 Hz
-    
-    writeCommand(HX8357_SETPANEL); //Set Panel
-    spiWrite(0x05);  // BGR, Gate direction swapped
-    
-    writeCommand(HX8357_SETPWR1);
-    spiWrite(0x00);  // Not deep standby
-    spiWrite(0x15);  //BT
-    spiWrite(0x1C);  //VSPR
-    spiWrite(0x1C);  //VSNR
-    spiWrite(0x83);  //AP
-    spiWrite(0xAA);  //FS
-
-    writeCommand(HX8357D_SETSTBA);  
-    spiWrite(0x50);  //OPON normal
-    spiWrite(0x50);  //OPON idle
-    spiWrite(0x01);  //STBA
-    spiWrite(0x3C);  //STBA
-    spiWrite(0x1E);  //STBA
-    spiWrite(0x08);  //GEN
-    
-    writeCommand(HX8357D_SETCYC);  
-    spiWrite(0x02);  //NW 0x02
-    spiWrite(0x40);  //RTN
-    spiWrite(0x00);  //DIV
-    spiWrite(0x2A);  //DUM
-    spiWrite(0x2A);  //DUM
-    spiWrite(0x0D);  //GDON
-    spiWrite(0x78);  //GDOFF
-
-    writeCommand(HX8357D_SETGAMMA); 
-    spiWrite(0x02);
-    spiWrite(0x0A);
-    spiWrite(0x11);
-    spiWrite(0x1d);
-    spiWrite(0x23);
-    spiWrite(0x35);
-    spiWrite(0x41);
-    spiWrite(0x4b);
-    spiWrite(0x4b);
-    spiWrite(0x42);
-    spiWrite(0x3A);
-    spiWrite(0x27);
-    spiWrite(0x1B);
-    spiWrite(0x08);
-    spiWrite(0x09);
-    spiWrite(0x03);
-    spiWrite(0x02);
-    spiWrite(0x0A);
-    spiWrite(0x11);
-    spiWrite(0x1d);
-    spiWrite(0x23);
-    spiWrite(0x35);
-    spiWrite(0x41);
-    spiWrite(0x4b);
-    spiWrite(0x4b);
-    spiWrite(0x42);
-    spiWrite(0x3A);
-    spiWrite(0x27);
-    spiWrite(0x1B);
-    spiWrite(0x08);
-    spiWrite(0x09);
-    spiWrite(0x03);
-    spiWrite(0x00);
-    spiWrite(0x01);
-    
-    writeCommand(HX8357_COLMOD);
-    spiWrite(0x55);  // 16 bit
-    
-    writeCommand(HX8357_MADCTL);  
-    spiWrite(0xC0); 
-    
-    writeCommand(HX8357_TEON);  // TE off
-    spiWrite(0x00); 
-    
-    writeCommand(HX8357_TEARLINE);  // tear line
-    spiWrite(0x00); 
-    spiWrite(0x02);
-
-    writeCommand(HX8357_SLPOUT); //Exit Sleep
-    delay(150);
-    
-    writeCommand(HX8357_DISPON);  // display on
-    delay(50);
-
-        SPIAsync_deassertSS();
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("xq"))) {
         // get sw self test result
         DC_OUTPORT &= ~(1 << DC_PIN);

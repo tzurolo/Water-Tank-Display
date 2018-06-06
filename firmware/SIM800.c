@@ -804,7 +804,7 @@ void SIM800_Initialize (
     CBCCallback = 0;
     promptCallback = 0;
 
-    SoftwareSerialTx_Initialize(TX_CHAN_INDEX, txPort, txPin);
+    SoftwareSerialTx_open(TX_CHAN_INDEX, txPort, txPin);
     SoftwareSerialTx_enable(TX_CHAN_INDEX);
 }
 

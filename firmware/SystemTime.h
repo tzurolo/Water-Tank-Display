@@ -82,6 +82,11 @@ inline void SystemTime_copy (
     to->hundredths = from->hundredths;
 }
 
+extern void SystemTime_getTaskTickRange (
+    uint8_t *minTicks,
+    uint8_t *maxTicks);
+extern void SystemTime_resetTaskTickRange (void);
+
 // returns t1.seconds - t2.seconds
 inline int32_t SystemTime_diffSec (
     const SystemTime_t *t1,
