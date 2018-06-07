@@ -18,6 +18,7 @@
 #include "CellularComm_SIM800.h"
 #include "TCPIPConsole.h"
 #include "CommandProcessor.h"
+#include "Display.h"
 
 #define SW_VERSION 10
 
@@ -334,6 +335,8 @@ void WaterLevelDisplay_setDataFromHost (
     const uint8_t waterLevelPct)
 {
     latestWaterLevelPercent = waterLevelPct;
+    Display_setWaterLevel(waterLevelPct);
+
     CharString_define(40, msg);
     CharString_copyP(PSTR("Water Level: "), &msg);
     StringUtils_appendDecimal(waterLevelPct, 1, 0, &msg);

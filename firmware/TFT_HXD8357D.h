@@ -34,7 +34,25 @@
 #define HX8357_YELLOW  0xFFE0  
 #define HX8357_WHITE   0xFFFF
 
+#define TFT_HXD8357D_width 320
+#define TFT_HXD8357D_height 480
+
+typedef struct TFT_HXD8357D_Rectangle_struct {
+    uint16_t x;
+    uint16_t y;
+    uint16_t width;
+    uint16_t height;
+    uint16_t color;
+} TFT_HXD8357D_Rectangle;
+
+// function defined by clients to specify a rectangle to draw.
+// return NULL if no rectangle to draw
+typedef const TFT_HXD8357D_Rectangle* (*TFT_HXD8357D_RectangleSource)(void);
+
 extern void TFT_HXD8357D_Initialize (void);
+
+extern void TFT_HXD8357D_setRectangleSource (
+    TFT_HXD8357D_RectangleSource source);
 
 extern void TFT_HXD8357D_task (void);
 

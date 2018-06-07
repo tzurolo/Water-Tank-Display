@@ -12,6 +12,8 @@
 #include "Console.h"
 #include "StringUtils.h"
 
+#define MAX_PIXELS_PER_BURST 300
+
 #define RST_OUTPORT  PORTF
 #define RST_PIN      PF0
 #define RST_DIR      DDRF
@@ -101,10 +103,14 @@ typedef enum TFTState_enum {
     tfts_waitingForSetc,
     tfts_waitingForSleepExit,
     tfts_waitingForDisplayOn,
-    tfts_idle
+    tfts_idle,
+    tfts_drawingRectangle
 } TFTState;
 static TFTState tftState;
 static SystemTime_t time;
+static TFT_HXD8357D_RectangleSource rectangleSource;
+static uint32_t currentRectRemainingPixels;
+static uint16_t currentRectColor;
 static volatile uint8_t backlightPWMCount;
 static uint8_t backlightBrightness; // 0 - 10, 0 is off, 10 is full on
 
@@ -202,12 +208,12 @@ static void spiWrite (const uint8_t byte)
 
 static void spiWrite16 (
     const uint16_t word,
-    const uint8_t repeat)
+    const uint16_t repeat)
 {
     const uint8_t hi = word >> 8;
     const uint8_t lo = word & 0xFF;
-    uint8_t remaining = repeat;
-    while (remaining > 0) {
+    uint16_t remaining = repeat;
+    while (remaining-- > 0) {
         while (!SPIAsync_operationCompleted());
         SPIAsync_sendByte(hi);
         while (!SPIAsync_operationCompleted());
@@ -276,6 +282,48 @@ static void writeCommand (const uint8_t cmd)
     DC_OUTPORT |= (1 << DC_PIN);
 }
 
+static void beginRectangle (
+    const TFT_HXD8357D_Rectangle *rect)
+{
+    SPIAsync_assertSS();
+    _delay_us(SS_SETUP_TIME);
+
+    // set addr window
+    writeCommand(HX8357_CASET); // Column addr set
+    spiWrite16(rect->x, 1);          // start column
+    spiWrite16(rect->x + rect->width - 1, 1);  // end column
+
+    writeCommand(HX8357_PASET); // Row addr set
+    spiWrite16(rect->y, 1);          // start row
+    spiWrite16(rect->y + rect->height - 1, 1);  // end row
+
+    writeCommand(HX8357_RAMWR); // write to RAM
+
+    // write pixels
+    currentRectColor = rect->color;
+    currentRectRemainingPixels = ((uint32_t)rect->width) * rect->height;
+}
+
+// returns true if it needs to continue drawing the rectangle
+static bool continueRectangle (void)
+{
+    const uint16_t pixelsToWrite = 
+        (currentRectRemainingPixels > MAX_PIXELS_PER_BURST)
+        ? MAX_PIXELS_PER_BURST
+        : currentRectRemainingPixels;
+    spiWrite16(currentRectColor, pixelsToWrite);
+
+    currentRectRemainingPixels -= pixelsToWrite;
+    if (currentRectRemainingPixels == 0) {
+        // all pixels have been written
+        while (!SPIAsync_operationCompleted());
+        SPIAsync_deassertSS();
+        return false;
+    } else {
+        return true;
+    }
+}
+
 
 void TFT_HXD8357D_Initialize (void)
 {
@@ -303,7 +351,14 @@ void TFT_HXD8357D_Initialize (void)
     backlightBrightness = 10;
     SystemTime_registerForTickNotification(systemTimeTick);
 
+    rectangleSource = NULL;
     tftState = tfts_initial;
+}
+
+void TFT_HXD8357D_setRectangleSource (
+    TFT_HXD8357D_RectangleSource source)
+{
+    rectangleSource = source;
 }
 
 void TFT_HXD8357D_task (void)
@@ -400,10 +455,41 @@ void TFT_HXD8357D_task (void)
             if (SystemTime_timeHasArrived(&time)) {
                 // display is on
                 SPIAsync_deassertSS();
+                _delay_us(SS_SETUP_TIME);
+#if 0
+                // did not get this to work - hung for some reason
+                // get sw self test result
+                DC_OUTPORT &= ~(1 << DC_PIN);
+                SPIAsync_assertSS();
+                _delay_us(SS_SETUP_TIME);
+                SPIAsync_sendByte(HX8357_RDDSDR);
+                while (!SPIAsync_operationCompleted()); // wait for preceding operation
+                DC_OUTPORT |= (1 << DC_PIN);
+                const uint8_t result = spiRead();
+                SPIAsync_deassertSS();
+                CharString_define(40, msg);
+                CharString_copyP(PSTR("TFT self-test: "), &msg);
+                StringUtils_appendDecimal(result, 1, 0, &msg);
+                Console_printCS(&msg);
+#endif
                 tftState = tfts_idle;
             }
             break;
-        case tfts_idle:
+        case tfts_idle: {
+            const TFT_HXD8357D_Rectangle *r =
+                (rectangleSource != NULL)
+                ? rectangleSource()
+                : NULL;
+            if (r != NULL) {
+                beginRectangle(r);
+                tftState = tfts_drawingRectangle;
+            }
+            }
+            break;
+        case tfts_drawingRectangle :
+            if (!continueRectangle()) {
+                tftState = tfts_idle;
+            }
             break;
     }
 

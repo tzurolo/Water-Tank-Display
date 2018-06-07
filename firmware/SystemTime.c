@@ -219,15 +219,18 @@ bool SystemTime_shuttingDown (void)
 void SystemTime_task (void)
 {
     uint8_t localTaskTickCounter;
+#if 0
     do {
     char SREGSave = SREG;
     cli();
     localTaskTickCounter = taskTickCounter;
     SREG = SREGSave;
     } while (localTaskTickCounter < 50);
+#endif
 
     char SREGSave = SREG;
     cli();
+    localTaskTickCounter = taskTickCounter;
     taskTickCounter = 0;
     SREG = SREGSave;
 

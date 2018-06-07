@@ -26,8 +26,10 @@ SRC          = $(TARGET).c Descriptors.c \
                Console.c \
                CommandProcessor.c \
                WaterLevelDisplay.c \
+               Display.c \
                TFT_HXD8357D.c \
                PowerMonitor.c \
+               SDCard.c \
                SystemTime.c \
                SoftwareSerialTx.c \
                SoftwareSerialRx0.c \

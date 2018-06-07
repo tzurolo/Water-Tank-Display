@@ -46,6 +46,7 @@
 #include "CellularTCPIP_SIM800.h"
 #include "TCPIPConsole.h"
 #include "TFT_HXD8357D.h"
+#include "Display.h"
 #include "PowerMonitor.h"
 #include "SDCard.h"
 #include "SoftwareSerialRx0.h"
@@ -57,8 +58,7 @@
 void Initialize (void)
 {
     // enable watchdog timer
-    //wdt_enable(WDTO_500MS);
-    wdt_enable(WDTO_8S);
+    wdt_enable(WDTO_500MS);
 
     /* Disable clock division */
 //	clock_prescale_set(clock_div_1);
@@ -71,6 +71,7 @@ void Initialize (void)
     CellularComm_Initialize();
     CellularTCPIP_Initialize();
     TCPIPConsole_Initialize();
+    Display_Initialize();
     TFT_HXD8357D_Initialize();
     PowerMonitor_Initialize();
     SDCard_Initialize();
@@ -102,6 +103,7 @@ int main(void)
         CellularComm_task();
         PowerMonitor_task();
         WaterLevelDisplay_task();
+        Display_task();
         TFT_HXD8357D_task();
     }
 
