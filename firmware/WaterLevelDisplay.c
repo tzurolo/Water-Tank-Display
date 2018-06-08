@@ -188,6 +188,14 @@ void WaterLevelDisplay_Initialize (void)
 
 void WaterLevelDisplay_task (void)
 {
+    if ((wldState > wlds_waitingForNextConnectTime) &&
+        (wldState < wlds_delayBeforeDisable) &&
+        SystemTime_timeHasArrived(&time)) {
+        // task has exceeded timeout
+        Console_printP(PSTR("WLD timeout"));
+        initiatePowerdown();
+    }
+
     switch (wldState) {
         case wlds_initial :
 //            wldState = (SystemTime_LastReboot() == lrb_software)
@@ -202,6 +210,9 @@ void WaterLevelDisplay_task (void)
                 enableTCPIP();
                 Console_printP(PSTR("time to connect"));
                 wldState = wlds_waitingForSensorData;
+
+                // set up overal task timeout
+                SystemTime_futureTime(EEPROMStorage_monitorTaskTimeout() * 100, &time);
             }
             break;
         case wlds_waitingForSensorData :
@@ -314,6 +325,7 @@ void WaterLevelDisplay_task (void)
             SystemTime_getCurrentTime(&curTime);
             nextConnectTime.seconds =
                 (((curTime.seconds + (loggingInterval / 2)) / loggingInterval) + 1) * loggingInterval;
+            nextConnectTime.seconds += EEPROMStorage_LoggingUpdateDelay();
             nextConnectTime.hundredths = 0;
             wldState = wlds_waitingForNextConnectTime;
             }

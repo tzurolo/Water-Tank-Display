@@ -36,19 +36,20 @@
 
 #define RESPONSE_BUFFER_LENGTH 200
 
-char rmCLOSE_OK[]           PROGMEM = "CLOSE OK";
-char rmCLOSED[]             PROGMEM = "CLOSED";
-char rmCONNECT_FAIL[]       PROGMEM = "CONNECT FAIL";
-char rmCONNECT_OK[]         PROGMEM = "CONNECT OK";
-char rmCall_Ready[]         PROGMEM = "Call Ready";
-char rmERROR[]              PROGMEM = "ERROR";
-char rmNORMAL_POWER_DOWN[]  PROGMEM = "NORMAL POWER DOWN";
-char rmOK[]                 PROGMEM = "OK";
-char rmRDY[]                PROGMEM = "RDY";
-char rmSEND_FAIL[]          PROGMEM = "SEND FAIL";
-char rmSEND_OK[]            PROGMEM = "SEND OK";
-char rmSHUT_OK[]            PROGMEM = "SHUT OK";
-char rmSMS_Ready[]          PROGMEM = "SMS Ready";
+char rmCLOSE_OK[]                   PROGMEM = "CLOSE OK";
+char rmCLOSED[]                     PROGMEM = "CLOSED";
+char rmCONNECT_FAIL[]               PROGMEM = "CONNECT FAIL";
+char rmCONNECT_OK[]                 PROGMEM = "CONNECT OK";
+char rmCall_Ready[]                 PROGMEM = "Call Ready";
+char rmERROR[]                      PROGMEM = "ERROR";
+char rmNORMAL_POWER_DOWN[]          PROGMEM = "NORMAL POWER DOWN";
+char rmOK[]                         PROGMEM = "OK";
+char rmRDY[]                        PROGMEM = "RDY";
+char rmSEND_FAIL[]                  PROGMEM = "SEND FAIL";
+char rmSEND_OK[]                    PROGMEM = "SEND OK";
+char rmSHUT_OK[]                    PROGMEM = "SHUT OK";
+char rmSMS_Ready[]                  PROGMEM = "SMS Ready";
+char rmUNDERVOLTAGE_POWER_DOWN[]    PROGMEM = "UNDER-VOLTAGE POWER DOWN";
 
 // table must be maintained in ASCII collation order, and
 // in sync with SIM800_ResponseMessage enum
@@ -66,7 +67,8 @@ PGM_P SIM800_ResponseMessageTable[] PROGMEM =
     rmSEND_FAIL,
     rmSEND_OK,
     rmSHUT_OK,
-    rmSMS_Ready
+    rmSMS_Ready,
+    rmUNDERVOLTAGE_POWER_DOWN
 };
 static const int SIM800_ResponseMessageTableSize = sizeof(SIM800_ResponseMessageTable) / sizeof(PGM_P);
 
@@ -550,6 +552,9 @@ static void processResponseMessage (
         case rm_NORMAL_POWER_DOWN   :
             Console_printP(PSTR("Powered Down!"));
             break;
+        case rm_UNDERVOLTAGE_POWER_DOWN   :
+            Console_printP(PSTR("Undervoltage!"));
+            break;
         case rm_RDY                 :
             Console_printP(PSTR("Ready!"));
             break;
@@ -841,6 +846,18 @@ void SIM800_task (void)
                 if (powerCommand) {
                     // was trying to power on - try again in a bit
                     SystemTime_futureTime(200, &powerRetryTime);
+                    mState = ms_powerRetryDelay;
+                } else {
+                    mState = ms_off;
+                }
+            } else if (responseMsg == rm_UNDERVOLTAGE_POWER_DOWN) {
+                deassertOnKey();
+#if DEBUG_TRACE
+                Console_printP(PSTR("--- Undervoltage ---"));
+#endif
+                if (powerCommand) {
+                    // was trying to power on - try again in a couple of minutes
+                    SystemTime_futureTime(12000, &powerRetryTime);
                     mState = ms_powerRetryDelay;
                 } else {
                     mState = ms_off;

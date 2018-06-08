@@ -23,9 +23,10 @@ char EEMEM cellPIN[8]  = "7353";
 char tzPinP[]  PROGMEM = "7353"; // Tony's telestial Sim card PIN
 int16_t EEMEM tempCalOffset = 327;
 uint8_t EEMEM watchdogTimerCal = 100;
-uint16_t EEMEM monitorTaskTimeout = 60;
+uint16_t EEMEM monitorTaskTimeout = 90;
 uint8_t EEMEM notification = 0;
 uint16_t EEMEM loggingUpdateInterval = 600;
+uint16_t EEMEM loggingUpdateDelay = 70;
 uint8_t EEMEM timeoutState = 0;
 
 // internet
@@ -79,7 +80,7 @@ void EEPROMStorage_Initialize (void)
 
         EEPROMStorage_setTempCalOffset(325);
         EEPROMStorage_setWatchdogTimerCal(94);
-        EEPROMStorage_setMonitorTaskTimeout(60);
+        EEPROMStorage_setMonitorTaskTimeout(90);
 
         EEPROMStorage_setNotification(false);
 
@@ -87,6 +88,7 @@ void EEPROMStorage_Initialize (void)
         EEPROMStorage_setAPN(&stringBufferSpan);
 
         EEPROMStorage_setLoggingUpdateInterval(600);
+        EEPROMStorage_setLoggingUpdateDelay(70);
         EEPROMStorage_setThingspeak(false);
         getCharStringSpanFromP(thingspeakHostAddressP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setThingspeakHostAddress(&stringBufferSpan);
@@ -235,6 +237,17 @@ void EEPROMStorage_setLoggingUpdateInterval (
 uint16_t EEPROMStorage_LoggingUpdateInterval (void)
 {
     return EEPROM_readWord(&loggingUpdateInterval);
+}
+
+void EEPROMStorage_setLoggingUpdateDelay (
+    const uint16_t updateDelay)
+{
+    EEPROM_writeWord(&loggingUpdateDelay, updateDelay);
+}
+
+uint16_t EEPROMStorage_LoggingUpdateDelay (void)
+{
+    return EEPROM_readWord(&loggingUpdateDelay);
 }
 
 void EEPROMStorage_setThingspeak (

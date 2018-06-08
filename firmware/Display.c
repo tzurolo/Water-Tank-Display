@@ -101,7 +101,7 @@ static const TFT_HXD8357D_Rectangle* rectangleSource (void)
             currentRectangle.x = TANK_X + TANK_WALL_THICKNESS;
             currentRectangle.y = TANK_Y + WATER_GAP_AT_TOP;
             currentRectangle.width = TANK_WIDTH - (2 * TANK_WALL_THICKNESS);
-            currentRectangle.height = waterY;
+            currentRectangle.height = waterY - WATER_GAP_AT_TOP;
             currentRectangle.color = HX8357_WHITE;
             rState = (waterLevel > 0) ? rs_drawWater : rs_done;
             break;

@@ -34,6 +34,7 @@ typedef enum SIM800_ResponseMessage_enum {
     rm_SEND_OK,
     rm_SHUT_OK,
     rm_SMS_Ready,
+    rm_UNDERVOLTAGE_POWER_DOWN,
     rm_unrecognized,
     rm_noResponseYet
 } SIM800_ResponseMessage;

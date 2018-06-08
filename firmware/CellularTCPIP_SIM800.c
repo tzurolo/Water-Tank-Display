@@ -319,7 +319,11 @@ static void advanceStateForCommand (
             break;
         case ips_TCP_CONNECTING :
         case ips_UDP_CONNECTING :
-            waitBeforeRequestingIPState();
+            if (curCommand == c_disconnect) {
+                endSubtask(cs_disconnected);
+            } else {
+                waitBeforeRequestingIPState();
+            }
             break;
         case ips_unknown :
             requestIPState();

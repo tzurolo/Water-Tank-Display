@@ -70,6 +70,9 @@ extern uint8_t EEPROMStorage_cipqsend (void);
 extern void EEPROMStorage_setLoggingUpdateInterval (
     const uint16_t updateInterval); // in seconds
 extern uint16_t EEPROMStorage_LoggingUpdateInterval (void);
+extern void EEPROMStorage_setLoggingUpdateDelay (
+    const uint16_t updateDelay); // in seconds
+extern uint16_t EEPROMStorage_LoggingUpdateDelay (void);
 
 //
 // Storage for ThingSpeak support.

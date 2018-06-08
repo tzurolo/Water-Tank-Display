@@ -32,7 +32,7 @@
 // if the state machine is in the same state for more than
 // this many hundredths of a second (such as if the cell module freezes up)
 // the system will commence shutdown and reboot
-#define STATE_TIMEOUT_TIME 12000L
+#define STATE_TIMEOUT_TIME 18000L
 
 typedef enum SMSMessageStatus_enum {
     sms_unknown,
@@ -536,6 +536,7 @@ void CellularComm_task (void)
             } else {
                 // cellular com is disabled. enter disabled state
                 TCPIPConsole_disable(false);
+                CellularTCPIP_disconnect();
                 ccState = ccs_disabling;
                 Console_printP(PSTR("> Disabling Cell <"));
             }
@@ -754,6 +755,8 @@ void CellularComm_task (void)
                 Console_printP(PSTR("TCPIP subtask completed"));
 #endif
                 ccState = ccs_idle;
+            } else if (!ccEnabled) {
+                CellularTCPIP_disconnect();
             }
             }
             break;
