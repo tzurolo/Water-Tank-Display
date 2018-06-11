@@ -200,11 +200,19 @@ bool CommandProcessor_executeCommand (
         if (!CharStringSpan_isEmpty(&statusToNumber)) {
             //CellularComm_setOutgoingSMSMessageNumber(&statusToNumber);
         }
-    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("b"))) {
-        const uint8_t brightness = scanIntegerToken(&cmd, &validCommand);
-        TFT_HXD8357D_setBacklightBrightness(brightness);
-
-
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("t"))) {
+        CharString_define(40, txt);
+        CharString_copyP(PSTR("water 52%"), &txt);
+        TFT_HXD8357D_setText(&txt);
+    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("lcd"))) {
+        const uint8_t mainsOnBrightness = scanIntegerToken(&cmd, &validCommand);
+        if (validCommand) {
+            EEPROMStorage_setLCDMainsOnBrightness(mainsOnBrightness);
+        }
+        const uint8_t mainsOffBrightness = scanIntegerToken(&cmd, &validCommand);
+        if (validCommand) {
+            EEPROMStorage_setLCDMainsOffBrightness(mainsOffBrightness);
+        }
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("data"))) {
         const uint8_t waterLevel = scanIntegerToken(&cmd, &validCommand);
         if (validCommand) {

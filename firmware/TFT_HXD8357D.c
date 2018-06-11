@@ -415,7 +415,7 @@ void TFT_HXD8357D_Initialize (void)
     tftState = tfts_initial;
 
     currentFont = DisplayFonts_primary();
-    CharString_copy("Water Level 52%", &currentText);
+    CharString_clear(&currentText);
     currentTextIter = CharString_begin(&currentText);
     currentCharX = 10;
     currentCharY = 50;
@@ -425,6 +425,14 @@ void TFT_HXD8357D_setRectangleSource (
     TFT_HXD8357D_RectangleSource source)
 {
     rectangleSource = source;
+}
+
+void TFT_HXD8357D_setText (
+    const CharString_t *text)
+{
+    CharString_copyCS(text, &currentText);
+    currentTextIter = CharString_begin(&currentText);
+    currentCharX = 10;
 }
 
 void TFT_HXD8357D_task (void)

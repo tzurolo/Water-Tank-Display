@@ -7,6 +7,10 @@
 #include "TFT_HXD8357D.h"
 #include "PowerMonitor.h"
 #include "EEPROMStorage.h"
+#include "CharString.h"
+#include "StringUtils.h"
+#include <avr/io.h>
+#include <avr/pgmspace.h>
 
 #define HEADER_HEIGHT 30
 
@@ -132,13 +136,20 @@ void Display_setWaterLevel (
     waterLevel = (level > 100) ? 100 : level;
     waterY = ((((uint16_t)(100 - waterLevel)) * WATER_HEIGHT) / 100) + WATER_GAP_AT_TOP;
     rState = (waterLevel < 100) ? rs_drawAir : rs_drawWater;
+
+    CharString_define(40, msg);
+    CharString_copyP(PSTR("Water Level: "), &msg);
+    StringUtils_appendDecimal(waterLevel, 1, 0, &msg);
+    CharString_appendC('%', &msg);
+    TFT_HXD8357D_setText(&msg);
 }
 
 void Display_task (void)
 {
     switch (dState) {
         case ds_initial:
-            Display_setWaterLevel(10);
+    waterLevel = 10;
+    waterY = ((((uint16_t)(100 - waterLevel)) * WATER_HEIGHT) / 100) + WATER_GAP_AT_TOP;
             rState = rs_drawHeader;
             rSubState = 0;
             TFT_HXD8357D_setRectangleSource(rectangleSource);

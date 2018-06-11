@@ -25,6 +25,7 @@
 #include <stddef.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
+#include "CharStringSpan.h"
 
 // Color definitions
 #define	HX8357_BLACK   0x0000
@@ -55,6 +56,9 @@ extern void TFT_HXD8357D_Initialize (void);
 
 extern void TFT_HXD8357D_setRectangleSource (
     TFT_HXD8357D_RectangleSource source);
+
+extern void TFT_HXD8357D_setText (
+    const CharString_t *text);
 
 extern void TFT_HXD8357D_task (void);
 
