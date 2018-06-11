@@ -43,6 +43,7 @@ SRC          = $(TARGET).c Descriptors.c \
                StringUtils.c \
                CharString.c \
                CharStringSpan.c \
+               DisplayFonts.c \
                $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS) \
                RAMSentinel.c
 LUFA_PATH    = ../../../LUFA

@@ -3,11 +3,10 @@
 //
 #include "TFT_HXD8357D.h"
 
-#include <avr/io.h>
-#include <avr/pgmspace.h>
 #include "SystemTime.h"
 #include "SPIAsync.h"
 #include "util/delay.h"
+#include "DisplayFonts.h"
 
 #include "Console.h"
 #include "StringUtils.h"
@@ -96,6 +95,14 @@
 #define HX8357B_SETGAMMA 0xC8
 #define HX8357B_SETPANELRELATED  0xE9
 
+#define MADCTL_MY  0x80     ///< Bottom to top
+#define MADCTL_MX  0x40     ///< Right to left
+#define MADCTL_MV  0x20     ///< Reverse Mode
+#define MADCTL_ML  0x10     ///< LCD refresh Bottom to top
+#define MADCTL_RGB 0x00     ///< Red-Green-Blue pixel order
+#define MADCTL_BGR 0x08     ///< Blue-Green-Red pixel order
+#define MADCTL_MH  0x04     ///< LCD refresh right to left
+
 typedef enum TFTState_enum {
     tfts_initial,
     tfts_waitingForPower,
@@ -104,13 +111,19 @@ typedef enum TFTState_enum {
     tfts_waitingForSleepExit,
     tfts_waitingForDisplayOn,
     tfts_idle,
-    tfts_drawingRectangle
+    tfts_drawingRectangle,
+    tfts_drawingText
 } TFTState;
 static TFTState tftState;
 static SystemTime_t time;
 static TFT_HXD8357D_RectangleSource rectangleSource;
 static uint32_t currentRectRemainingPixels;
 static uint16_t currentRectColor;
+static const GFXfont *currentFont;
+CharString_define(40, currentText);
+static CharString_Iter currentTextIter;
+static uint16_t currentCharX;
+static uint16_t currentCharY;
 static volatile uint8_t backlightPWMCount;
 static uint8_t backlightBrightness; // 0 - 10, 0 is off, 10 is full on
 
@@ -219,6 +232,7 @@ static void spiWrite16 (
         while (!SPIAsync_operationCompleted());
         SPIAsync_sendByte(lo);
     }
+    while (!SPIAsync_operationCompleted());
 }
 
 static void spiWriteP (
@@ -232,7 +246,8 @@ static void spiWriteP (
         const uint8_t byte = pgm_read_byte(bp++);
         while (!SPIAsync_operationCompleted());
         SPIAsync_sendByte(byte);
-   }
+    }
+    while (!SPIAsync_operationCompleted());
 }
 
 static uint8_t spiRead (void)
@@ -273,9 +288,11 @@ static void systemTimeTick (void)
 
 static void writeCommand (const uint8_t cmd)
 {
+#if 0
     if (tftState > tfts_waitingForPower) {
         while (!SPIAsync_operationCompleted()); // wait for preceding operation
     }
+#endif
     DC_OUTPORT &= ~(1 << DC_PIN);
     SPIAsync_sendByte(cmd);
     while (!SPIAsync_operationCompleted()); // wait for preceding operation
@@ -316,7 +333,6 @@ static bool continueRectangle (void)
     currentRectRemainingPixels -= pixelsToWrite;
     if (currentRectRemainingPixels == 0) {
         // all pixels have been written
-        while (!SPIAsync_operationCompleted());
         SPIAsync_deassertSS();
         return false;
     } else {
@@ -324,6 +340,50 @@ static bool continueRectangle (void)
     }
 }
 
+
+static void drawChar(
+    const uint16_t x,
+    const uint16_t y,
+    const char ch)
+{
+    SPIAsync_assertSS();
+    _delay_us(SS_SETUP_TIME);
+
+        const uint8_t c = ch - (uint8_t)pgm_read_byte(&currentFont->first);
+        GFXglyph *glyph  = &(((GFXglyph *)pgm_read_word(&currentFont->glyph))[c]);
+        uint8_t  *bitmap = (uint8_t *)pgm_read_word(&currentFont->bitmap);
+
+        uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
+        uint8_t  w  = pgm_read_byte(&glyph->width),
+                 h  = pgm_read_byte(&glyph->height);
+        int8_t   xo = pgm_read_byte(&glyph->xOffset),
+                 yo = pgm_read_byte(&glyph->yOffset);
+        uint8_t  bits = 0;
+        uint8_t  bit = 0;
+
+        // set addr window
+        writeCommand(HX8357_CASET); // Column addr set
+        spiWrite16(x, 1);          // start column
+        spiWrite16(x + w - 1, 1);  // end column
+
+        writeCommand(HX8357_PASET); // Row addr set
+        spiWrite16(y, 1);          // start row
+        spiWrite16(y + h - 1, 1);  // end row
+
+        writeCommand(HX8357_RAMWR); // write to RAM
+
+        for(int yy=0; yy<h; yy++) {
+            for(int xx=0; xx<w; xx++) {
+                if(!(bit++ & 7)) {
+                    bits = pgm_read_byte(&bitmap[bo++]);
+                }
+
+                spiWrite16(((bits & 0x80) != 0) ? HX8357_BLACK : HX8357_WHITE, 1);
+                bits <<= 1;
+            }
+        }
+        SPIAsync_deassertSS();
+}
 
 void TFT_HXD8357D_Initialize (void)
 {
@@ -353,6 +413,12 @@ void TFT_HXD8357D_Initialize (void)
 
     rectangleSource = NULL;
     tftState = tfts_initial;
+
+    currentFont = DisplayFonts_primary();
+    CharString_copy("Water Level 52%", &currentText);
+    currentTextIter = CharString_begin(&currentText);
+    currentCharX = 10;
+    currentCharY = 50;
 }
 
 void TFT_HXD8357D_setRectangleSource (
@@ -438,6 +504,9 @@ void TFT_HXD8357D_task (void)
                 spiWrite(0x00); 
                 spiWrite(0x02);
 
+                writeCommand(HX8357_MADCTL);    // display orientation
+                spiWrite(MADCTL_MV | MADCTL_MY | MADCTL_RGB);
+
                 writeCommand(HX8357_SLPOUT); //Exit Sleep
                 SystemTime_futureTime(15, &time);
                 tftState = tfts_waitingForSleepExit;
@@ -483,12 +552,24 @@ void TFT_HXD8357D_task (void)
             if (r != NULL) {
                 beginRectangle(r);
                 tftState = tfts_drawingRectangle;
-            }
+            } else {
+                if ((rectangleSource != NULL) &&
+                    (currentTextIter != CharString_end(&currentText))) {
+                    tftState = tfts_drawingText;
+                }
+            }                
             }
             break;
         case tfts_drawingRectangle :
             if (!continueRectangle()) {
                 tftState = tfts_idle;
+            }
+            break;
+        case tfts_drawingText : {
+            drawChar(currentCharX, currentCharY, *currentTextIter);
+            ++currentTextIter;
+            currentCharX += 21;
+            tftState = tfts_idle;
             }
             break;
     }

@@ -5,14 +5,15 @@
 #include "Display.h"
 
 #include "TFT_HXD8357D.h"
+#include "PowerMonitor.h"
+#include "EEPROMStorage.h"
 
 #define HEADER_HEIGHT 30
-#define FOOTER_HEIGHT 30
 
-#define TANK_WIDTH 220
-#define TANK_HEIGHT 300
-#define TANK_X 50
-#define TANK_Y 100
+#define TANK_WIDTH 300
+#define TANK_HEIGHT 250
+#define TANK_X 100
+#define TANK_Y 50
 #define TANK_WALL_THICKNESS 8
 #define TANK_WALL_COLOR HX8357_BLACK
 
@@ -27,7 +28,6 @@ typedef enum DispalyState_enum {
 typedef enum RectangleState_enum {
     rs_drawHeader,
     rs_drawBody,
-    rs_drawFooter,
     rs_drawTankOutline,
     rs_drawAir,
     rs_drawWater,
@@ -59,16 +59,8 @@ static const TFT_HXD8357D_Rectangle* rectangleSource (void)
             currentRectangle.x = 0;
             currentRectangle.y = HEADER_HEIGHT;
             currentRectangle.width = TFT_HXD8357D_width;
-            currentRectangle.height = (TFT_HXD8357D_height - (HEADER_HEIGHT + FOOTER_HEIGHT));
+            currentRectangle.height = (TFT_HXD8357D_height - HEADER_HEIGHT);
             currentRectangle.color = HX8357_WHITE;
-            rState = rs_drawFooter;
-            break;
-        case rs_drawFooter :
-            currentRectangle.x = 0;
-            currentRectangle.y = TFT_HXD8357D_height - FOOTER_HEIGHT;
-            currentRectangle.width = TFT_HXD8357D_width;
-            currentRectangle.height = FOOTER_HEIGHT;
-            currentRectangle.color = HX8357_YELLOW;
             rState = rs_drawTankOutline;
             break;
         case rs_drawTankOutline :
@@ -155,4 +147,10 @@ void Display_task (void)
         case ds_idle:
             break;
     }
+
+    // manage display brightness
+    TFT_HXD8357D_setBacklightBrightness(
+        PowerMonitor_mainsOn()
+        ? EEPROMStorage_LCDMainsOnBrightness()
+        : EEPROMStorage_LCDMainsOffBrightness());
 }

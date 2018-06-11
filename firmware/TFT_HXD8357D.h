@@ -23,6 +23,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stddef.h>
+#include <avr/io.h>
+#include <avr/pgmspace.h>
 
 // Color definitions
 #define	HX8357_BLACK   0x0000
@@ -34,8 +36,8 @@
 #define HX8357_YELLOW  0xFFE0  
 #define HX8357_WHITE   0xFFFF
 
-#define TFT_HXD8357D_width 320
-#define TFT_HXD8357D_height 480
+#define TFT_HXD8357D_width 480
+#define TFT_HXD8357D_height 320
 
 typedef struct TFT_HXD8357D_Rectangle_struct {
     uint16_t x;
