@@ -203,7 +203,7 @@ bool CommandProcessor_executeCommand (
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("t"))) {
         CharString_define(40, txt);
         CharString_copyP(PSTR("water 52%"), &txt);
-        TFT_HXD8357D_setText(&txt);
+//        TFT_HXD8357D_setText(&txt);
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("lcd"))) {
         const uint8_t mainsOnBrightness = scanIntegerToken(&cmd, &validCommand);
         if (validCommand) {

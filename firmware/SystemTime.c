@@ -219,15 +219,6 @@ bool SystemTime_shuttingDown (void)
 void SystemTime_task (void)
 {
     uint8_t localTaskTickCounter;
-#if 0
-    do {
-    char SREGSave = SREG;
-    cli();
-    localTaskTickCounter = taskTickCounter;
-    SREG = SREGSave;
-    } while (localTaskTickCounter < 50);
-#endif
-
     char SREGSave = SREG;
     cli();
     localTaskTickCounter = taskTickCounter;
@@ -245,7 +236,7 @@ void SystemTime_task (void)
 //        LED_OUTPORT |= (1 << LED_PIN);
     } else {
         wdt_reset();
-#if 0
+
         // reboot if it's been more than the stored reboot interval plus 3 logging intervals
         // since startup
         const uint32_t uptime = SystemTime_uptime();
@@ -255,7 +246,6 @@ void SystemTime_task (void)
         if (uptime > rebootIntervalSeconds) {
             SystemTime_commenceShutdown();
         }
-#endif
     }
 }
 

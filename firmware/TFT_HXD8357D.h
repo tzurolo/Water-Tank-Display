@@ -48,17 +48,28 @@ typedef struct TFT_HXD8357D_Rectangle_struct {
     uint16_t color;
 } TFT_HXD8357D_Rectangle;
 
+typedef struct TFT_HXD8357D_Text_struct {
+    uint16_t x;
+    uint16_t y;
+    CharStringSpan_t chars;
+    uint16_t fgColor;
+    uint16_t bgColor;
+} TFT_HXD8357D_Text;
+
 // function defined by clients to specify a rectangle to draw.
 // return NULL if no rectangle to draw
 typedef const TFT_HXD8357D_Rectangle* (*TFT_HXD8357D_RectangleSource)(void);
+// function defined by clients to specify a rectangle to draw.
+// return NULL if no rectangle to draw
+typedef const TFT_HXD8357D_Text* (*TFT_HXD8357D_TextSource)(void);
 
 extern void TFT_HXD8357D_Initialize (void);
 
 extern void TFT_HXD8357D_setRectangleSource (
     TFT_HXD8357D_RectangleSource source);
 
-extern void TFT_HXD8357D_setText (
-    const CharString_t *text);
+extern void TFT_HXD8357D_setTextSource (
+    TFT_HXD8357D_TextSource source);
 
 extern void TFT_HXD8357D_task (void);
 

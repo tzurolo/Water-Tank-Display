@@ -116,33 +116,22 @@ typedef enum TFTState_enum {
 } TFTState;
 static TFTState tftState;
 static SystemTime_t time;
+
 static TFT_HXD8357D_RectangleSource rectangleSource;
 static uint32_t currentRectRemainingPixels;
 static uint16_t currentRectColor;
-static const GFXfont *currentFont;
-CharString_define(40, currentText);
-static CharString_Iter currentTextIter;
+
+static TFT_HXD8357D_TextSource textSource;
 static uint16_t currentCharX;
 static uint16_t currentCharY;
+static CharString_Iter currentTextIter;
+static CharString_Iter currentTextEndIter;
+static const GFXfont *currentFont;
+static uint16_t currentTextFGColor;
+static uint16_t currentTextBGColor;
+
 static volatile uint8_t backlightPWMCount;
 static uint8_t backlightBrightness; // 0 - 10, 0 is off, 10 is full on
-
-// special characters
-const uint16_t powerIcon[] = {
-0b0000000000000000,
-0b0001100000110000,
-0b0001100000110000,
-0b0001100000110000,
-0b0001100000110000,
-0b1111111111111110,
-0b1111111111111110,
-0b1111111111111110,
-0b0111111111111100,
-0b0000111111100000,
-0b0000001110000000,
-0b0000001110000000,
-0b0000001110000000
-};
 
 const prog_char SETPWR1_params[] PROGMEM = {
     0x00,   // Not deep standby
@@ -244,10 +233,9 @@ static void spiWriteP (
     PGM_P bp = bytes;
     while (remaining-- != 0) {
         const uint8_t byte = pgm_read_byte(bp++);
-        while (!SPIAsync_operationCompleted());
         SPIAsync_sendByte(byte);
+        while (!SPIAsync_operationCompleted());
     }
-    while (!SPIAsync_operationCompleted());
 }
 
 static uint8_t spiRead (void)
@@ -340,49 +328,67 @@ static bool continueRectangle (void)
     }
 }
 
-
-static void drawChar(
-    const uint16_t x,
-    const uint16_t y,
-    const char ch)
+static void beginText (
+    const TFT_HXD8357D_Text *t)
 {
     SPIAsync_assertSS();
     _delay_us(SS_SETUP_TIME);
 
-        const uint8_t c = ch - (uint8_t)pgm_read_byte(&currentFont->first);
-        GFXglyph *glyph  = &(((GFXglyph *)pgm_read_word(&currentFont->glyph))[c]);
-        uint8_t  *bitmap = (uint8_t *)pgm_read_word(&currentFont->bitmap);
+    currentCharX = t->x;
+    currentCharY = t->y;
+    currentTextIter = CharStringSpan_begin(&t->chars);
+    currentTextEndIter = CharStringSpan_end(&t->chars);
+    currentTextFGColor = t->fgColor;
+    currentTextBGColor = t->bgColor;
+}
 
-        uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
-        uint8_t  w  = pgm_read_byte(&glyph->width),
-                 h  = pgm_read_byte(&glyph->height);
-        int8_t   xo = pgm_read_byte(&glyph->xOffset),
-                 yo = pgm_read_byte(&glyph->yOffset);
-        uint8_t  bits = 0;
-        uint8_t  bit = 0;
+static bool continueText (void)
+{
+    const uint8_t c = (*currentTextIter) - (uint8_t)pgm_read_byte(&currentFont->first);
+    GFXglyph *glyph  = &(((GFXglyph *)pgm_read_word(&currentFont->glyph))[c]);
+    uint8_t  *bitmap = (uint8_t *)pgm_read_word(&currentFont->bitmap);
 
-        // set addr window
-        writeCommand(HX8357_CASET); // Column addr set
-        spiWrite16(x, 1);          // start column
-        spiWrite16(x + w - 1, 1);  // end column
+    uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
+    uint8_t  w  = pgm_read_byte(&glyph->width),
+                h  = pgm_read_byte(&glyph->height);
+    int8_t   xo = pgm_read_byte(&glyph->xOffset),
+                yo = pgm_read_byte(&glyph->yOffset);
+    uint8_t  bits = 0;
+    uint8_t  bit = 0;
 
-        writeCommand(HX8357_PASET); // Row addr set
-        spiWrite16(y, 1);          // start row
-        spiWrite16(y + h - 1, 1);  // end row
+    // set addr window
+    writeCommand(HX8357_CASET); // Column addr set
+    spiWrite16(currentCharX, 1);          // start column
+    spiWrite16(currentCharX + w - 1, 1);  // end column
 
-        writeCommand(HX8357_RAMWR); // write to RAM
+    writeCommand(HX8357_PASET); // Row addr set
+    spiWrite16(currentCharY, 1);          // start row
+    spiWrite16(currentCharY + h - 1, 1);  // end row
 
-        for(int yy=0; yy<h; yy++) {
-            for(int xx=0; xx<w; xx++) {
-                if(!(bit++ & 7)) {
-                    bits = pgm_read_byte(&bitmap[bo++]);
-                }
+    writeCommand(HX8357_RAMWR); // write to RAM
 
-                spiWrite16(((bits & 0x80) != 0) ? HX8357_BLACK : HX8357_WHITE, 1);
-                bits <<= 1;
+    for(int yy=0; yy<h; yy++) {
+        for(int xx=0; xx<w; xx++) {
+            if(!(bit++ & 7)) {
+                bits = pgm_read_byte(&bitmap[bo++]);
             }
+
+            spiWrite16(((bits & 0x80) != 0)
+                       ? currentTextFGColor
+                       : currentTextBGColor, 1);
+            bits <<= 1;
         }
+    }
+
+    currentCharX += (uint8_t)pgm_read_byte(&glyph->xAdvance);
+    ++currentTextIter;
+    if (currentTextIter == currentTextEndIter) {
+        // all chars have been written
         SPIAsync_deassertSS();
+        return false;
+    } else {
+        return true;
+    }
 }
 
 void TFT_HXD8357D_Initialize (void)
@@ -412,13 +418,10 @@ void TFT_HXD8357D_Initialize (void)
     SystemTime_registerForTickNotification(systemTimeTick);
 
     rectangleSource = NULL;
+    textSource = NULL;
     tftState = tfts_initial;
 
     currentFont = DisplayFonts_primary();
-    CharString_clear(&currentText);
-    currentTextIter = CharString_begin(&currentText);
-    currentCharX = 10;
-    currentCharY = 50;
 }
 
 void TFT_HXD8357D_setRectangleSource (
@@ -427,12 +430,10 @@ void TFT_HXD8357D_setRectangleSource (
     rectangleSource = source;
 }
 
-void TFT_HXD8357D_setText (
-    const CharString_t *text)
+void TFT_HXD8357D_setTextSource (
+    TFT_HXD8357D_TextSource source)
 {
-    CharString_copyCS(text, &currentText);
-    currentTextIter = CharString_begin(&currentText);
-    currentCharX = 10;
+    textSource = source;
 }
 
 void TFT_HXD8357D_task (void)
@@ -448,6 +449,7 @@ void TFT_HXD8357D_task (void)
             if (SystemTime_timeHasArrived(&time)) {
                 // release RST
                 RST_OUTPORT |= (1 << RST_PIN);
+                _delay_us(SS_SETUP_TIME);
                 SPIAsync_assertSS();
                 _delay_us(SS_SETUP_TIME);
                 writeCommand(HX8357_SWRESET);
@@ -561,8 +563,12 @@ void TFT_HXD8357D_task (void)
                 beginRectangle(r);
                 tftState = tfts_drawingRectangle;
             } else {
-                if ((rectangleSource != NULL) &&
-                    (currentTextIter != CharString_end(&currentText))) {
+                const TFT_HXD8357D_Text *t =
+                    (textSource != NULL)
+                    ? textSource()
+                    : NULL;
+                if (t != NULL) {
+                    beginText(t);
                     tftState = tfts_drawingText;
                 }
             }                
@@ -573,11 +579,9 @@ void TFT_HXD8357D_task (void)
                 tftState = tfts_idle;
             }
             break;
-        case tfts_drawingText : {
-            drawChar(currentCharX, currentCharY, *currentTextIter);
-            ++currentTextIter;
-            currentCharX += 21;
-            tftState = tfts_idle;
+        case tfts_drawingText :
+            if (!continueText()) {
+                tftState = tfts_idle;
             }
             break;
     }

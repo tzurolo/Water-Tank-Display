@@ -9,6 +9,7 @@
 #include "EEPROMStorage.h"
 #include "CharString.h"
 #include "StringUtils.h"
+#include "SystemTime.h"
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
@@ -43,8 +44,12 @@ static RectangleState rState;
 static RectangleState prevRState;
 static uint8_t rSubState;
 static TFT_HXD8357D_Rectangle currentRectangle;
+static TFT_HXD8357D_Text currentText;
+CharString_define(40, currentTextString);
 static uint8_t waterLevel;  // percent full
+static uint8_t lastDisplayedWaterLevel;
 static uint16_t waterY; // relative to top of tank
+static uint32_t lastDisplayedTimeSeconds;
 
 // will be called by TFT_HXD8357D to get the next rectangle to draw, if any
 static const TFT_HXD8357D_Rectangle* rectangleSource (void)
@@ -125,9 +130,46 @@ static const TFT_HXD8357D_Rectangle* rectangleSource (void)
     return &currentRectangle;
 }
 
+static const TFT_HXD8357D_Text* textSource (void)
+{
+    SystemTime_t curTime;
+    SystemTime_getCurrentTime(&curTime);
+    if (curTime.seconds != lastDisplayedTimeSeconds) {
+        // time changed - update display
+        lastDisplayedTimeSeconds = curTime.seconds;
+
+        currentText.x = TFT_HXD8357D_width - 120;
+        currentText.y = 5;
+        CharString_clear(&currentTextString);
+        SystemTime_appendToString(&curTime, &currentTextString);
+        CharStringSpan_init(&currentTextString, &currentText.chars);
+        currentText.bgColor = HX8357_GREEN;
+        currentText.fgColor = HX8357_BLACK;
+        return &currentText;
+    } else if (lastDisplayedWaterLevel != waterLevel) {
+        // water level changed
+        lastDisplayedWaterLevel = waterLevel;
+
+        currentText.x = (TFT_HXD8357D_width / 2) - 20;
+        currentText.y = TANK_Y + waterY + 10;
+        CharString_clear(&currentTextString);
+        StringUtils_appendDecimal(waterLevel, 1, 0, &currentTextString);
+        CharString_appendC('%', &currentTextString);
+        CharStringSpan_init(&currentTextString, &currentText.chars);
+        currentText.bgColor = HX8357_BLUE;
+        currentText.fgColor = HX8357_WHITE;
+        return &currentText;
+    } else {
+        return NULL;
+    }
+}
+
 void Display_Initialize (void)
 {
     dState = ds_initial;
+
+    lastDisplayedWaterLevel = 0;
+    lastDisplayedTimeSeconds = 0;
 }
 
 void Display_setWaterLevel (
@@ -136,23 +178,20 @@ void Display_setWaterLevel (
     waterLevel = (level > 100) ? 100 : level;
     waterY = ((((uint16_t)(100 - waterLevel)) * WATER_HEIGHT) / 100) + WATER_GAP_AT_TOP;
     rState = (waterLevel < 100) ? rs_drawAir : rs_drawWater;
-
-    CharString_define(40, msg);
-    CharString_copyP(PSTR("Water Level: "), &msg);
-    StringUtils_appendDecimal(waterLevel, 1, 0, &msg);
-    CharString_appendC('%', &msg);
-    TFT_HXD8357D_setText(&msg);
 }
 
 void Display_task (void)
 {
     switch (dState) {
         case ds_initial:
-    waterLevel = 10;
+#if 1
+            waterLevel = 10;
     waterY = ((((uint16_t)(100 - waterLevel)) * WATER_HEIGHT) / 100) + WATER_GAP_AT_TOP;
             rState = rs_drawHeader;
             rSubState = 0;
             TFT_HXD8357D_setRectangleSource(rectangleSource);
+#endif
+            TFT_HXD8357D_setTextSource(textSource);
             dState = ds_idle;
             break;
         case ds_idle:

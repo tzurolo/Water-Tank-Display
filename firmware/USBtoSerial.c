@@ -87,7 +87,6 @@ int main(void)
 {
     Initialize();
     sei();
-    Console_printP(PSTR("starting..."));
     for (;;) {
         if (!RAMSentinel_sentinelIntact()) {
             Console_printP(PSTR("stack collision!"));
@@ -105,6 +104,16 @@ int main(void)
         WaterLevelDisplay_task();
         Display_task();
         TFT_HXD8357D_task();
+
+        // daily reboot logic, but not in the middle of display task activity
+        if (WaterLevelDisplay_taskIsIdle() &&
+             (!SystemTime_shuttingDown())) {
+            const uint32_t uptime = SystemTime_uptime();
+            const uint32_t rebootIntervalSeconds = (((uint32_t)EEPROMStorage_rebootInterval()) * 60);
+            if (uptime > rebootIntervalSeconds) {
+                SystemTime_commenceShutdown();
+            }
+        }
     }
 
     return 0;
