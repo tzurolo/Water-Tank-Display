@@ -29,6 +29,9 @@ uint16_t EEMEM loggingUpdateInterval = 600;
 uint16_t EEMEM loggingUpdateDelay = 70;
 uint8_t EEMEM timeoutState = 0;
 
+uint8_t EEMEM LCDMainsOnBrightness = 8;
+uint8_t EEMEM LCDMainsOffBrightness = 1;
+
 // internet
 //char EEMEM apn[40] = "mobiledata";    // T-Mobile
 char EEMEM apn[40]  = "hologram";        // hologram.io
@@ -78,7 +81,7 @@ void EEPROMStorage_Initialize (void)
         EEPROMStorage_setPIN(&stringBufferSpan);
         EEPROMStorage_setCipqsend(0);
 
-        EEPROMStorage_setTempCalOffset(325);
+        EEPROMStorage_setTempCalOffset(279);
         EEPROMStorage_setWatchdogTimerCal(94);
         EEPROMStorage_setMonitorTaskTimeout(90);
 
@@ -89,6 +92,10 @@ void EEPROMStorage_Initialize (void)
 
         EEPROMStorage_setLoggingUpdateInterval(600);
         EEPROMStorage_setLoggingUpdateDelay(70);
+
+        EEPROMStorage_setLCDMainsOnBrightness(8);
+        EEPROMStorage_setLCDMainsOffBrightness(1);
+
         EEPROMStorage_setThingspeak(false);
         getCharStringSpanFromP(thingspeakHostAddressP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setThingspeakHostAddress(&stringBufferSpan);
@@ -248,6 +255,28 @@ void EEPROMStorage_setLoggingUpdateDelay (
 uint16_t EEPROMStorage_LoggingUpdateDelay (void)
 {
     return EEPROM_readWord(&loggingUpdateDelay);
+}
+
+void EEPROMStorage_setLCDMainsOnBrightness (
+    const uint8_t mainsOnBrightness)
+{
+    EEPROM_write(&LCDMainsOnBrightness, mainsOnBrightness);
+}
+
+uint8_t EEPROMStorage_LCDMainsOnBrightness (void)
+{
+    return EEPROM_read(&LCDMainsOnBrightness);
+}
+
+void EEPROMStorage_setLCDMainsOffBrightness (
+    const uint8_t mainsOffBrightness)
+{
+    EEPROM_write(&LCDMainsOffBrightness, mainsOffBrightness);
+}
+
+uint8_t EEPROMStorage_LCDMainsOffBrightness (void)
+{
+    return EEPROM_read(&LCDMainsOffBrightness);
 }
 
 void EEPROMStorage_setThingspeak (

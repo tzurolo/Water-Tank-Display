@@ -10,6 +10,7 @@
 #include "CharString.h"
 #include "StringUtils.h"
 #include "SystemTime.h"
+#include "InternalTemperatureMonitor.h"
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
@@ -50,6 +51,7 @@ static uint8_t waterLevel;  // percent full
 static uint8_t lastDisplayedWaterLevel;
 static uint16_t waterY; // relative to top of tank
 static uint32_t lastDisplayedTimeSeconds;
+static int16_t lastDisplayedTemperature;
 
 // will be called by TFT_HXD8357D to get the next rectangle to draw, if any
 static const TFT_HXD8357D_Rectangle* rectangleSource (void)
@@ -132,6 +134,8 @@ static const TFT_HXD8357D_Rectangle* rectangleSource (void)
 
 static const TFT_HXD8357D_Text* textSource (void)
 {
+    const bool haveValidTemp = InternalTemperatureMonitor_haveValidSample();
+    const int16_t temperature = haveValidTemp ? InternalTemperatureMonitor_currentTemperature() : 0;
     SystemTime_t curTime;
     SystemTime_getCurrentTime(&curTime);
     if (curTime.seconds != lastDisplayedTimeSeconds) {
@@ -159,6 +163,21 @@ static const TFT_HXD8357D_Text* textSource (void)
         currentText.bgColor = HX8357_BLUE;
         currentText.fgColor = HX8357_WHITE;
         return &currentText;
+    } else if (lastDisplayedTemperature != temperature) {
+        lastDisplayedTemperature = temperature;
+        if (haveValidTemp) {
+            currentText.x = 0;
+            currentText.y = 5;
+            CharString_copyP(PSTR("T:"), &currentTextString);
+            StringUtils_appendDecimal(temperature, 1, 0, &currentTextString);
+            CharStringSpan_init(&currentTextString, &currentText.chars);
+            currentText.bgColor = HX8357_GREEN;
+            currentText.fgColor = HX8357_BLACK;
+            return &currentText;
+        } else {
+            // TODO: erase temp field
+            return NULL;
+        }
     } else {
         return NULL;
     }
@@ -170,6 +189,7 @@ void Display_Initialize (void)
 
     lastDisplayedWaterLevel = 0;
     lastDisplayedTimeSeconds = 0;
+    lastDisplayedTemperature = 0;
 }
 
 void Display_setWaterLevel (

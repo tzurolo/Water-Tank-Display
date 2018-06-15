@@ -80,7 +80,7 @@ static bool sampleDataSender (void)
         SystemTime_t curTime;
         SystemTime_getCurrentTime(&curTime);
         const int32_t secondsSinceLastSample = SystemTime_diffSec(&curTime, &connectStartTime);
-        CharString_appendP(PSTR("C"), &dataToSend);
+        CharString_appendC('C', &dataToSend);
         StringUtils_appendDecimal(secondsSinceLastSample, 1, 0, &dataToSend);
         CharString_appendC(';', &dataToSend);
 
@@ -172,7 +172,6 @@ void transitionPerCommandMode(void)
     if (commandMode == cpm_commandBlock) {
         // more commands coming. wait for next command
         wldState = wlds_waitingForHostCommand;
-        Console_printP(PSTR("wait for next command"));
     } else {
         // no more commands coming. initiate powerdown sequence
         initiatePowerdown();
@@ -208,7 +207,6 @@ void WaterLevelDisplay_task (void)
             if (SystemTime_timeHasArrived(&nextConnectTime)) {
                 SystemTime_getCurrentTime(&connectStartTime);
                 enableTCPIP();
-                Console_printP(PSTR("time to connect"));
                 wldState = wlds_waitingForSensorData;
 
                 // set up overal task timeout
@@ -236,11 +234,9 @@ void WaterLevelDisplay_task (void)
                 case sds_sending :
                     break;
                 case sds_completedSuccessfully :
-                    Console_printP(PSTR("success, wait for 1st cmd"));
                     wldState = wlds_waitingForHostCommand;
                     break;
                 case sds_completedFailed :
-                    Console_printP(PSTR("failed, wait for 1st cmd"));
                     wldState = wlds_waitingForHostCommand;
                     break;
             }
@@ -333,9 +329,9 @@ void WaterLevelDisplay_task (void)
     }
 }
 
-bool WaterLevelDisplay_taskIsDone (void)
+bool WaterLevelDisplay_taskIsIdle (void)
 {
-    return wldState == wlds_done;
+    return wldState == wlds_waitingForNextConnectTime;
 }
 
 WaterLevelDisplayState WaterLevelDisplay_state (void)

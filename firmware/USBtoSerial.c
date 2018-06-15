@@ -51,6 +51,8 @@
 #include "SDCard.h"
 #include "SoftwareSerialRx0.h"
 #include "SoftwareSerialTx.h"
+#include "ADCManager.h"
+#include "InternalTemperatureMonitor.h"
 #include "WaterLevelDisplay.h"
 #include "RAMSentinel.h"
 
@@ -75,6 +77,8 @@ void Initialize (void)
     TFT_HXD8357D_Initialize();
     PowerMonitor_Initialize();
     SDCard_Initialize();
+    ADCManager_Initialize();
+    InternalTemperatureMonitor_Initialize();
     RAMSentinel_Initialize();
     USBTerminal_Initialize();
     WaterLevelDisplay_Initialize();
@@ -95,6 +99,8 @@ int main(void)
 
         // run all the tasks
         SystemTime_task();
+        ADCManager_task();
+        InternalTemperatureMonitor_task();
         SIM800_task();
         Console_task();
         USBTerminal_task();

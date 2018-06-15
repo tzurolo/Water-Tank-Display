@@ -293,15 +293,15 @@ void SystemTime_appendToString (
 {
     // append day of week
     StringUtils_appendDecimal(SystemTime_dayOfWeek(time), 1, 0, timeString);
-    CharString_appendP(PSTR(":"), timeString);
+    CharString_appendC(':', timeString);
 
     // append hours
     StringUtils_appendDecimal(SystemTime_hours(time), 2, 0, timeString);
-    CharString_appendP(PSTR(":"), timeString);
+    CharString_appendC(':', timeString);
 
     // append minutes
     StringUtils_appendDecimal(SystemTime_minutes(time), 2, 0, timeString);
-    CharString_appendP(PSTR(":"), timeString);
+    CharString_appendC(':', timeString);
 
     // append seconds
     StringUtils_appendDecimal(SystemTime_seconds(time), 2, 0, timeString);

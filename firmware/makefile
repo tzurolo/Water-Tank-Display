@@ -36,9 +36,11 @@ SRC          = $(TARGET).c Descriptors.c \
                SIM800.c \
                EEPROM_Util.c \
                EEPROMStorage.c \
+               InternalTemperatureMonitor.c \
                IOPortBitField.c \
                MessageIDQueue.c \
                ByteQueue.c \
+               ADCManager.c \
                SPIAsync.c \
                StringUtils.c \
                CharString.c \
