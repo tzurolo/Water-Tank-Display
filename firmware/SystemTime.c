@@ -293,7 +293,7 @@ void SystemTime_appendToString (
 {
     // append day of week
     StringUtils_appendDecimal(SystemTime_dayOfWeek(time), 1, 0, timeString);
-    CharString_appendC(':', timeString);
+    CharString_appendC(',', timeString);
 
     // append hours
     StringUtils_appendDecimal(SystemTime_hours(time), 2, 0, timeString);

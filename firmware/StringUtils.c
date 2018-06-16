@@ -101,6 +101,13 @@ void StringUtils_scanInteger (
     CharString_Iter iter = CharStringSpan_begin(source);
     CharString_Iter end = CharStringSpan_end(source);
 
+    // read minus sign
+    bool isNegative = false;
+    if (*iter == '-') {
+        isNegative = true;
+        ++iter;
+    }
+
     char ch;
     bool gotDigit = false;
     while ((iter != end) && (ch = *iter) && (ch >= '0') && (ch <= '9')) {
@@ -111,7 +118,7 @@ void StringUtils_scanInteger (
 
     if (gotDigit) {
         *isValid = true;
-        *value = workingValue;
+        *value = isNegative ? -workingValue : workingValue;
         if (updatedSource != NULL) {
             CharStringSpan_set(iter, end, updatedSource);
         }

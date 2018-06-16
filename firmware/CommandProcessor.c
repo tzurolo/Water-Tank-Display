@@ -26,6 +26,7 @@
 #include "TFT_HXD8357D.h"
 #include "PowerMonitor.h"
 #include "SDCard.h"
+#include "Display.h"
 
 typedef void (*StringProvider)(
     CharString_t *string);
@@ -210,12 +211,17 @@ bool CommandProcessor_executeCommand (
             EEPROMStorage_setLCDMainsOffBrightness(mainsOffBrightness);
         }
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("data"))) {
-        const uint8_t waterLevel = scanIntegerToken(&cmd, &validCommand);
+        const int8_t waterLevel = scanIntegerToken(&cmd, &validCommand);
         if (validCommand) {
-            WaterLevelDisplay_setDataFromHost(waterLevel);
-            const uint32_t serverTime = scanIntegerU32Token(&cmd, &validCommand);
-            if (validCommand && (serverTime != 0)) {
-                SystemTime_setTimeAdjustment(&serverTime);
+            const uint32_t waterLevelTimestamp = scanIntegerU32Token(&cmd, &validCommand);
+            if (validCommand) {
+                const uint32_t serverTime = scanIntegerU32Token(&cmd, &validCommand);
+                if (validCommand) {
+                    Display_setWaterLevel(waterLevel, &waterLevelTimestamp);
+                    if (serverTime != 0) {
+                        SystemTime_setTimeAdjustment(&serverTime);
+                    }
+                }
             }
         }
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("set"))) {

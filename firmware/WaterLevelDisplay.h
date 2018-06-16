@@ -30,11 +30,8 @@ extern void WaterLevelDisplay_Initialize (void);
 // called in each iteration of the mainloop
 extern void WaterLevelDisplay_task (void);
 
-extern bool WaterLevelDisplay_taskIsDone (void);
+extern bool WaterLevelDisplay_taskIsIdle (void);
 
 extern WaterLevelDisplayState WaterLevelDisplay_state (void);
-
-extern void WaterLevelDisplay_setDataFromHost (
-    const uint8_t waterLevelPct);
 
 #endif  // WATERLEVELDISPLAY_H

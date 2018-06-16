@@ -6,6 +6,9 @@
 
 #include "FreeSans12pt7b.h"
 
+#include "Console.h"
+#include "StringUtils.h"
+
 // special characters
 const uint16_t powerIcon[] PROGMEM = {
 0b0000000000000000,
@@ -27,4 +30,13 @@ const uint16_t powerIcon[] PROGMEM = {
 const GFXfont* DisplayFonts_primary (void)
 {
     return &FreeSans12pt7b;
+}
+
+uint8_t DisplayFonts_fontHeight (
+    const GFXfont* font)
+{
+    const int8_t yBottom = pgm_read_byte(&font->yBottom);
+    const int8_t yTop = pgm_read_byte(&font->yTop);
+
+    return yBottom - yTop;
 }

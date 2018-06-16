@@ -27,6 +27,8 @@ typedef struct { // Data stored for FONT AS A WHOLE:
 	GFXglyph *glyph;       // Glyph array
 	uint8_t   first, last; // ASCII extents
 	uint8_t   yAdvance;    // Newline distance (y axis)
+	int8_t    yTop;        // lowest glyph y (distance from cursor pos)
+	int8_t    yBottom;     // highest glyph y (distance from cursor pos)
 } GFXfont;
 
 #endif // _GFXFONT_H_

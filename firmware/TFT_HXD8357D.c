@@ -349,10 +349,10 @@ static bool continueText (void)
     uint8_t  *bitmap = (uint8_t *)pgm_read_word(&currentFont->bitmap);
 
     uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
-    uint8_t  w  = pgm_read_byte(&glyph->width),
-                h  = pgm_read_byte(&glyph->height);
-    int8_t   xo = pgm_read_byte(&glyph->xOffset),
-                yo = pgm_read_byte(&glyph->yOffset);
+    uint8_t  w  = pgm_read_byte(&glyph->width);
+    uint8_t  h  = pgm_read_byte(&glyph->height);
+    int8_t   xo = pgm_read_byte(&glyph->xOffset);
+    int8_t   yo = pgm_read_byte(&glyph->yOffset);
     uint8_t  bits = 0;
     uint8_t  bit = 0;
 

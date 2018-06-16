@@ -17,7 +17,8 @@ extern void Display_Initialize (void);
 
 // set water level in percent
 extern void Display_setWaterLevel (
-    const uint8_t level);
+    const int8_t level,
+    const uint32_t *levelTimestamp);
 
 extern void Display_task (void);
 

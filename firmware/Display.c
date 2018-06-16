@@ -13,6 +13,7 @@
 #include "InternalTemperatureMonitor.h"
 #include "CellularComm_SIM800.h"
 #include "PowerMonitor.h"
+#include "DisplayFonts.h"
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
@@ -20,13 +21,16 @@
 
 #define TANK_WIDTH 300
 #define TANK_HEIGHT 250
-#define TANK_X 100
-#define TANK_Y 50
+#define TANK_X 90
+#define TANK_Y 40
 #define TANK_WALL_THICKNESS 8
 #define TANK_WALL_COLOR HX8357_BLACK
 
 #define WATER_GAP_AT_TOP 20
 #define WATER_HEIGHT (TANK_HEIGHT - (TANK_WALL_THICKNESS + WATER_GAP_AT_TOP))
+
+// water level below this will be displayed on top of water
+#define WATER_TEXT_MIN_LEVEL 15
 
 typedef enum DispalyState_enum {
     ds_initial,
@@ -49,8 +53,10 @@ static uint8_t rSubState;
 static TFT_HXD8357D_Rectangle currentRectangle;
 static TFT_HXD8357D_Text currentText;
 CharString_define(40, currentTextString);
-static uint8_t waterLevel;  // percent full
-static uint8_t lastDisplayedWaterLevel;
+static int8_t waterLevel;  // percent full, or -1 if water level unkown
+static int8_t lastDisplayedWaterLevel;
+static uint32_t waterLevelTimestamp;
+static uint32_t lastDisplayedWaterLevelTimestamp;
 static uint16_t waterY; // relative to top of tank
 static uint32_t lastDisplayedTimeSeconds;
 static int16_t lastDisplayedTemperature;
@@ -163,18 +169,49 @@ static const TFT_HXD8357D_Text* textSource (void)
         currentText.bgColor = HX8357_GREEN;
         currentText.fgColor = HX8357_BLACK;
         return &currentText;
-    } else if (lastDisplayedWaterLevel != waterLevel) {
+    } else if (waterLevel != lastDisplayedWaterLevel) {
         // water level changed
         lastDisplayedWaterLevel = waterLevel;
 
-        currentText.x = (TFT_HXD8357D_width / 2) - 20;
-        currentText.y = TANK_Y + waterY + 10;
+        currentText.x = (TANK_X + (TANK_WIDTH / 2)) - 20;
         CharString_clear(&currentTextString);
-        StringUtils_appendDecimal(waterLevel, 1, 0, &currentTextString);
-        CharString_appendC('%', &currentTextString);
+        if (waterLevel >= 0) {
+            currentText.y = TANK_Y + waterY;
+            if (waterLevel < WATER_TEXT_MIN_LEVEL) {
+                currentText.y -= DisplayFonts_fontHeight(DisplayFonts_primary()) + 5;
+            } else {
+                currentText.y += 10;
+            }
+            StringUtils_appendDecimal(waterLevel, 1, 0, &currentTextString);
+            CharString_appendC('%', &currentTextString);
+        } else {
+            currentText.y = TANK_Y + (WATER_HEIGHT / 2);
+            CharString_appendC('?', &currentTextString);
+        }
         CharStringSpan_init(&currentTextString, &currentText.chars);
-        currentText.bgColor = HX8357_BLUE;
-        currentText.fgColor = HX8357_WHITE;
+        if (waterLevel < WATER_TEXT_MIN_LEVEL) {
+            currentText.bgColor = HX8357_WHITE;
+            currentText.fgColor = HX8357_BLUE;
+        } else {
+            currentText.bgColor = HX8357_BLUE;
+            currentText.fgColor = HX8357_WHITE;
+        }
+        return &currentText;
+    } else if (waterLevelTimestamp != lastDisplayedWaterLevelTimestamp) {
+        // water level timestamp changed
+        lastDisplayedWaterLevelTimestamp = waterLevelTimestamp;
+
+        SystemTime_t ts;
+        ts.seconds = waterLevelTimestamp;
+        ts.seconds += (((int32_t)EEPROMStorage_utcOffset()) * 3600);
+        ts.hundredths = 0;
+        currentText.x = TANK_X;
+        currentText.y = TFT_HXD8357D_height - DisplayFonts_fontHeight(DisplayFonts_primary());
+        CharString_copyP(PSTR("as of "), &currentTextString);
+        SystemTime_appendToString(&ts, &currentTextString);
+        CharStringSpan_init(&currentTextString, &currentText.chars);
+        currentText.bgColor = HX8357_WHITE;
+        currentText.fgColor = HX8357_BLACK;
         return &currentText;
     } else if (temperature != lastDisplayedTemperature) {
         lastDisplayedTemperature = temperature;
@@ -251,7 +288,8 @@ void Display_Initialize (void)
 {
     dState = ds_initial;
 
-    lastDisplayedWaterLevel = 0;
+    lastDisplayedWaterLevel = -2;
+    lastDisplayedWaterLevelTimestamp = 0;
     lastDisplayedTimeSeconds = 0;
     lastDisplayedTemperature = 0;
     lastDisplayBatteryPercent = 0;
@@ -260,25 +298,29 @@ void Display_Initialize (void)
 }
 
 void Display_setWaterLevel (
-    const uint8_t level)
+    const int8_t level,
+    const uint32_t *levelTimestamp)
 {
     waterLevel = (level > 100) ? 100 : level;
-    waterY = ((((uint16_t)(100 - waterLevel)) * WATER_HEIGHT) / 100) + WATER_GAP_AT_TOP;
+    waterY = (
+        (waterLevel > 0)
+        ? ((((uint16_t)(100 - waterLevel)) * WATER_HEIGHT) / 100)
+        : WATER_HEIGHT) +
+        WATER_GAP_AT_TOP;
     rState = (waterLevel < 100) ? rs_drawAir : rs_drawWater;
-    lastDisplayedWaterLevel = 0;
+    lastDisplayedWaterLevel = -2;   // force update
+    waterLevelTimestamp = *levelTimestamp;
 }
 
 void Display_task (void)
 {
     switch (dState) {
         case ds_initial:
-#if 1
-            waterLevel = 10;
-    waterY = ((((uint16_t)(100 - waterLevel)) * WATER_HEIGHT) / 100) + WATER_GAP_AT_TOP;
             rState = rs_drawHeader;
             rSubState = 0;
+            waterLevel = -1;
+            waterY = WATER_HEIGHT + WATER_GAP_AT_TOP;
             TFT_HXD8357D_setRectangleSource(rectangleSource);
-#endif
             TFT_HXD8357D_setTextSource(textSource);
             dState = ds_idle;
             break;
