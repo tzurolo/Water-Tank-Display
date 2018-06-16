@@ -33,6 +33,7 @@ extern uint8_t CellularComm_SignalQuality (void);
 extern int CellularComm_state (void);
 extern bool CellularComm_stateIsTCPIPSubtask(const int state);
 extern uint16_t CellularComm_batteryMillivolts (void);
+extern uint8_t CellularComm_batteryPercent (void);
 
 // posts the current contents of the outgoing message text
 // to the given phone number

@@ -22,7 +22,7 @@ uint16_t EEMEM rebootInterval = 1440;   // one day
 char EEMEM cellPIN[8]  = "7353";
 char tzPinP[]  PROGMEM = "7353"; // Tony's telestial Sim card PIN
 int16_t EEMEM tempCalOffset = 327;
-uint8_t EEMEM watchdogTimerCal = 100;
+int8_t EEMEM utcOffset = -4;
 uint16_t EEMEM monitorTaskTimeout = 90;
 uint8_t EEMEM notification = 0;
 uint16_t EEMEM loggingUpdateInterval = 600;
@@ -41,10 +41,10 @@ uint8_t EEMEM cipqsend = 0;
 // thingspeak
 uint8_t EEMEM thingspeakEnabled = 0;
 char EEMEM thingspeakHostAddress[40]  = "api.thingspeak.com";
-char thingspeakHostAddressP[] PROGMEM = "api.thingspeak.com";
+//char thingspeakHostAddressP[] PROGMEM = "api.thingspeak.com";
 uint16_t EEMEM thingspeakHostPort = 80;
 char EEMEM thingspeakWriteKey[20] = "DD7TVSCZEHKZLAQP";
-char thingspeakWriteKeyP[] PROGMEM = "DD7TVSCZEHKZLAQP";
+//char thingspeakWriteKeyP[] PROGMEM = "DD7TVSCZEHKZLAQP";
 
 // TCPIP Console
 uint8_t EEMEM ipConsoleEnabled = 1;
@@ -63,6 +63,7 @@ static void getCharStringSpanFromP (
 
 void EEPROMStorage_Initialize (void)
 {
+#if 1
     // check if EE has been initialized
     const uint8_t iFlag = EEPROM_read(&initFlag);
     const uint8_t initLevel = (iFlag == 0xFF) ? 0 : iFlag;
@@ -82,7 +83,7 @@ void EEPROMStorage_Initialize (void)
         EEPROMStorage_setCipqsend(0);
 
         EEPROMStorage_setTempCalOffset(279);
-        EEPROMStorage_setWatchdogTimerCal(94);
+        EEPROMStorage_setUTCOffset(-4);
         EEPROMStorage_setMonitorTaskTimeout(90);
 
         EEPROMStorage_setNotification(false);
@@ -96,12 +97,14 @@ void EEPROMStorage_Initialize (void)
         EEPROMStorage_setLCDMainsOnBrightness(8);
         EEPROMStorage_setLCDMainsOffBrightness(1);
 
+#if EEPROMStorage_supportThingspeak
         EEPROMStorage_setThingspeak(false);
         getCharStringSpanFromP(thingspeakHostAddressP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setThingspeakHostAddress(&stringBufferSpan);
         EEPROMStorage_setThingspeakHostPort(80);
         getCharStringSpanFromP(thingspeakWriteKeyP, &stringBuffer, &stringBufferSpan);
         EEPROMStorage_setThingspeakWriteKey(&stringBufferSpan);
+#endif  /* EEPROMStorage_supportThingspeak */
 
         EEPROMStorage_setIPConsoleEnabled(false);
         getCharStringSpanFromP(tzHostAddressP, &stringBuffer, &stringBufferSpan);
@@ -111,6 +114,7 @@ void EEPROMStorage_Initialize (void)
         // indicate EE has been initialized
         EEPROM_write(&initFlag, 1);
     }
+#endif
 }
 
 void EEPROMStorage_setUnitID (
@@ -169,15 +173,15 @@ int16_t EEPROMStorage_tempCalOffset (void)
     return EEPROM_readWord((uint16_t*)&tempCalOffset);
 }
 
-void EEPROMStorage_setWatchdogTimerCal (
-    const uint8_t wdtCal)
+void EEPROMStorage_setUTCOffset (
+    const int8_t offset)
 {
-    EEPROM_write((uint8_t*)&watchdogTimerCal, wdtCal);
+    EEPROM_write((uint8_t*)&utcOffset, offset);
 }
 
-uint8_t EEPROMStorage_watchdogTimerCal (void)
+int8_t EEPROMStorage_utcOffset(void)
 {
-    return EEPROM_read((uint8_t*)&watchdogTimerCal);
+    return EEPROM_read((int8_t*)&utcOffset);
 }
 
 void EEPROMStorage_setMonitorTaskTimeout (
@@ -279,6 +283,7 @@ uint8_t EEPROMStorage_LCDMainsOffBrightness (void)
     return EEPROM_read(&LCDMainsOffBrightness);
 }
 
+#if EEPROMStorage_supportThingspeak
 void EEPROMStorage_setThingspeak (
     const bool enabled)
 {
@@ -324,6 +329,7 @@ void EEPROMStorage_getThingspeakWriteKey (
 {
     EEPROM_readString(thingspeakWriteKey, writekey);
 }
+#endif /* EEPROMStorage_supportThingspeak */
 
 void EEPROMStorage_setIPConsoleEnabled (
     const bool enabled)

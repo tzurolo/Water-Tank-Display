@@ -11,6 +11,8 @@
 #include "StringUtils.h"
 #include "SystemTime.h"
 #include "InternalTemperatureMonitor.h"
+#include "CellularComm_SIM800.h"
+#include "PowerMonitor.h"
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 
@@ -52,6 +54,10 @@ static uint8_t lastDisplayedWaterLevel;
 static uint16_t waterY; // relative to top of tank
 static uint32_t lastDisplayedTimeSeconds;
 static int16_t lastDisplayedTemperature;
+static uint8_t lastDisplayBatteryPercent;
+static uint8_t lastDisplaySignalQuality;
+static bool lastDisplayMainsOn;
+static bool lastDisplayPumpOn;
 
 // will be called by TFT_HXD8357D to get the next rectangle to draw, if any
 static const TFT_HXD8357D_Rectangle* rectangleSource (void)
@@ -136,6 +142,10 @@ static const TFT_HXD8357D_Text* textSource (void)
 {
     const bool haveValidTemp = InternalTemperatureMonitor_haveValidSample();
     const int16_t temperature = haveValidTemp ? InternalTemperatureMonitor_currentTemperature() : 0;
+    const uint8_t batteryPercent = CellularComm_batteryPercent();
+    const uint8_t signalQuality = CellularComm_SignalQuality();
+    const bool mainsOn = PowerMonitor_mainsOn();
+    const bool pumpOn = PowerMonitor_pumpOn();
     SystemTime_t curTime;
     SystemTime_getCurrentTime(&curTime);
     if (curTime.seconds != lastDisplayedTimeSeconds) {
@@ -145,6 +155,9 @@ static const TFT_HXD8357D_Text* textSource (void)
         currentText.x = TFT_HXD8357D_width - 120;
         currentText.y = 5;
         CharString_clear(&currentTextString);
+        if (curTime.seconds > 43200L) { // max UTC offset
+            curTime.seconds += (((int32_t)EEPROMStorage_utcOffset()) * 3600);
+        }
         SystemTime_appendToString(&curTime, &currentTextString);
         CharStringSpan_init(&currentTextString, &currentText.chars);
         currentText.bgColor = HX8357_GREEN;
@@ -163,7 +176,7 @@ static const TFT_HXD8357D_Text* textSource (void)
         currentText.bgColor = HX8357_BLUE;
         currentText.fgColor = HX8357_WHITE;
         return &currentText;
-    } else if (lastDisplayedTemperature != temperature) {
+    } else if (temperature != lastDisplayedTemperature) {
         lastDisplayedTemperature = temperature;
         if (haveValidTemp) {
             currentText.x = 0;
@@ -178,6 +191,57 @@ static const TFT_HXD8357D_Text* textSource (void)
             // TODO: erase temp field
             return NULL;
         }
+    } else if (batteryPercent != lastDisplayBatteryPercent) {
+        lastDisplayBatteryPercent = batteryPercent;
+        if (batteryPercent != 0) {
+            currentText.x = 75;
+            currentText.y = 5;
+            CharString_copyP(PSTR("B:"), &currentTextString);
+            StringUtils_appendDecimal(batteryPercent, 1, 0, &currentTextString);
+            CharString_appendC('%', &currentTextString);
+            CharStringSpan_init(&currentTextString, &currentText.chars);
+            currentText.bgColor = HX8357_GREEN;
+            currentText.fgColor = HX8357_BLACK;
+            return &currentText;
+        } else {
+            // TODO: erase field
+            return NULL;
+        }
+    } else if (signalQuality != lastDisplaySignalQuality) {
+        lastDisplaySignalQuality = signalQuality;
+        if (signalQuality != 0) {
+            currentText.x = 250;
+            currentText.y = 5;
+            CharString_copyP(PSTR("Q:"), &currentTextString);
+            StringUtils_appendDecimal(signalQuality, 1, 0, &currentTextString);
+            CharStringSpan_init(&currentTextString, &currentText.chars);
+            currentText.bgColor = HX8357_GREEN;
+            currentText.fgColor = HX8357_BLACK;
+            return &currentText;
+        } else {
+            // TODO: erase field
+            return NULL;
+        }
+    } else if (mainsOn != lastDisplayMainsOn) {
+        lastDisplayMainsOn = mainsOn;
+        currentText.x = 170;
+        currentText.y = 5;
+        CharString_clear(&currentTextString);
+        CharString_appendC(mainsOn ? 'M' : '/', &currentTextString);
+        CharStringSpan_init(&currentTextString, &currentText.chars);
+        currentText.bgColor = HX8357_GREEN;
+        currentText.fgColor = HX8357_RED;
+        return &currentText;
+    } else if (pumpOn != lastDisplayPumpOn) {
+        lastDisplayPumpOn = pumpOn;
+        currentText.x = 195;
+        currentText.y = 5;
+        CharString_clear(&currentTextString);
+        CharString_appendC(pumpOn ? 'P' : '/', &currentTextString);
+        CharStringSpan_init(&currentTextString, &currentText.chars);
+        currentText.bgColor = HX8357_GREEN;
+        currentText.fgColor = HX8357_BLUE;
+        return &currentText;
     } else {
         return NULL;
     }
@@ -190,6 +254,9 @@ void Display_Initialize (void)
     lastDisplayedWaterLevel = 0;
     lastDisplayedTimeSeconds = 0;
     lastDisplayedTemperature = 0;
+    lastDisplayBatteryPercent = 0;
+    lastDisplaySignalQuality = 0;
+    lastDisplayMainsOn = false;
 }
 
 void Display_setWaterLevel (
@@ -198,6 +265,7 @@ void Display_setWaterLevel (
     waterLevel = (level > 100) ? 100 : level;
     waterY = ((((uint16_t)(100 - waterLevel)) * WATER_HEIGHT) / 100) + WATER_GAP_AT_TOP;
     rState = (waterLevel < 100) ? rs_drawAir : rs_drawWater;
+    lastDisplayedWaterLevel = 0;
 }
 
 void Display_task (void)

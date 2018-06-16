@@ -42,7 +42,7 @@ static char onP[]               PROGMEM = "on";
 static char idP[]               PROGMEM = "id";
 static char ipserverP[]         PROGMEM = "ipserver";
 static char tCalOffsetP[]       PROGMEM = "tCalOffset";
-static char wdtCalP[]           PROGMEM = "wdtCal";
+static char utcOffsetP[]        PROGMEM = "utcOffset";
 static char batCalP[]           PROGMEM = "batCal";
 static char wlmTimeoutP[]       PROGMEM = "wlmTimeout";
 static char rebootP[]           PROGMEM = "reboot";
@@ -200,10 +200,6 @@ bool CommandProcessor_executeCommand (
         if (!CharStringSpan_isEmpty(&statusToNumber)) {
             //CellularComm_setOutgoingSMSMessageNumber(&statusToNumber);
         }
-    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("t"))) {
-        CharString_define(40, txt);
-        CharString_copyP(PSTR("water 52%"), &txt);
-//        TFT_HXD8357D_setText(&txt);
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("lcd"))) {
         const uint8_t mainsOnBrightness = scanIntegerToken(&cmd, &validCommand);
         if (validCommand) {
@@ -222,11 +218,6 @@ bool CommandProcessor_executeCommand (
                 SystemTime_setTimeAdjustment(&serverTime);
             }
         }
-    } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("tset"))) {
-        const uint32_t serverTime = scanIntegerU32Token(&cmd, &validCommand);
-        if (validCommand && (serverTime != 0)) {
-            SystemTime_setTimeAdjustment(&serverTime);
-        }
     } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("set"))) {
         StringUtils_scanToken(&cmd, &cmdToken);
         if (CharStringSpan_equalsNocaseP(&cmdToken, idP)) {
@@ -239,10 +230,10 @@ bool CommandProcessor_executeCommand (
             if (validCommand) {
                 EEPROMStorage_setTempCalOffset(tempCalOffset);
             }
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, wdtCalP)) {
-            const uint8_t wdtCal = scanIntegerToken(&cmd, &validCommand);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, utcOffsetP)) {
+            const int8_t utcOffsetHours = scanIntegerToken(&cmd, &validCommand);
             if (validCommand) {
-                EEPROMStorage_setWatchdogTimerCal(wdtCal);
+                EEPROMStorage_setUTCOffset(utcOffsetHours);
             }
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, wlmTimeoutP)) {
             const uint16_t wlmTimeout = scanIntegerToken(&cmd, &validCommand);
@@ -276,6 +267,7 @@ bool CommandProcessor_executeCommand (
             if (validCommand) {
                 EEPROMStorage_setLoggingUpdateInterval(loggingInterval);
             }
+#if EEPROMStorage_supportThingspeak
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, thingspeakP)) {
             StringUtils_scanToken(&cmd, &cmdToken);
             if (CharStringSpan_equalsNocaseP(&cmdToken, onP)) {
@@ -300,6 +292,7 @@ bool CommandProcessor_executeCommand (
             } else {
                 validCommand = false;
             }
+#endif  /* EEPROMStorage_supportThingspeak */
         } else {
             validCommand = false;
         }
@@ -311,8 +304,8 @@ bool CommandProcessor_executeCommand (
             makeJSONIntValue(idP, EEPROMStorage_unitID(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, tCalOffsetP)) {
             makeJSONIntValue(tCalOffsetP, EEPROMStorage_tempCalOffset(), reply);
-        } else if (CharStringSpan_equalsNocaseP(&cmdToken, wdtCalP)) {
-            makeJSONIntValue(wdtCalP, EEPROMStorage_watchdogTimerCal(), reply);
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, utcOffsetP)) {
+            makeJSONIntValue(utcOffsetP, EEPROMStorage_utcOffset(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, wlmTimeoutP)) {
             makeJSONIntValue(wlmTimeoutP, EEPROMStorage_monitorTaskTimeout(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, rebootP)) {
@@ -329,6 +322,7 @@ bool CommandProcessor_executeCommand (
             endJSON(reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, logIntervalP)) {
             makeJSONIntValue(logIntervalP, EEPROMStorage_LoggingUpdateInterval(), reply);
+#if EEPROMStorage_supportThingspeak
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, thingspeakP)) {
             beginJSON(reply);
             appendJSONIntValue(PSTR("TS_En"), EEPROMStorage_thingspeakEnabled() ? 1 : 0, reply);
@@ -339,6 +333,7 @@ bool CommandProcessor_executeCommand (
             continueJSON(reply);
             appendJSONStrValue(PSTR("TS_WK"), EEPROMStorage_getThingspeakWriteKey, reply);
             endJSON(reply);
+#endif  /* EEPROMStorage_supportThingspeak */
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, PSTR("time"))) {
             beginJSON(reply);
             SystemTime_t time;

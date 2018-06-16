@@ -18,7 +18,9 @@
 #include "CellularComm_SIM800.h"
 #include "TCPIPConsole.h"
 #include "CommandProcessor.h"
+#include "PowerMonitor.h"
 #include "Display.h"
+#include "InternalTemperatureMonitor.h"
 
 #define SW_VERSION 10
 
@@ -55,7 +57,7 @@ static SystemTime_t connectStartTime;
 static CharStringSpan_t remainingReplyDataToSend;
 static uint8_t latestWaterLevelPercent;
 
-#define DATA_SENDER_BUFFER_LEN 30
+#define DATA_SENDER_BUFFER_LEN 40
 
 static bool sampleDataSender (void)
 {
@@ -77,6 +79,12 @@ static bool sampleDataSender (void)
         StringUtils_appendDecimal((int)CellularComm_registrationStatus(), 1, 0, &dataToSend);
         CharString_appendC('Q', &dataToSend);
         StringUtils_appendDecimal(CellularComm_SignalQuality(), 1, 0, &dataToSend);
+        CharString_appendC('M', &dataToSend);
+        CharString_appendC(PowerMonitor_mainsOn() ? '1' : '0', &dataToSend);
+        CharString_appendC('P', &dataToSend);
+        CharString_appendC(PowerMonitor_pumpOn() ? '1' : '0', &dataToSend);
+        CharString_appendC('T', &dataToSend);
+        StringUtils_appendDecimal(InternalTemperatureMonitor_currentTemperature(), 1, 0, &dataToSend);
         SystemTime_t curTime;
         SystemTime_getCurrentTime(&curTime);
         const int32_t secondsSinceLastSample = SystemTime_diffSec(&curTime, &connectStartTime);
@@ -309,15 +317,11 @@ void WaterLevelDisplay_task (void)
             }
             break;
         case wlds_done : {
-            SystemTime_t curTime;
-            SystemTime_getCurrentTime(&curTime);
-            if (curTime.seconds < 200) {
-                // we don't have server time yet - set it now
-                // otherwise we will set it upon daily reboot
-                SystemTime_applyTimeAdjustment();
-            }
+            SystemTime_applyTimeAdjustment();
+
             // determine when to contact host
             const uint16_t loggingInterval = EEPROMStorage_LoggingUpdateInterval();
+            SystemTime_t curTime;
             SystemTime_getCurrentTime(&curTime);
             nextConnectTime.seconds =
                 (((curTime.seconds + (loggingInterval / 2)) / loggingInterval) + 1) * loggingInterval;
@@ -344,10 +348,4 @@ void WaterLevelDisplay_setDataFromHost (
 {
     latestWaterLevelPercent = waterLevelPct;
     Display_setWaterLevel(waterLevelPct);
-
-    CharString_define(40, msg);
-    CharString_copyP(PSTR("Water Level: "), &msg);
-    StringUtils_appendDecimal(waterLevelPct, 1, 0, &msg);
-    CharString_appendC('%', &msg);
-    Console_printCS(&msg);
 }

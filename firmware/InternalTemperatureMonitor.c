@@ -12,13 +12,11 @@
 
 #define SENSOR_ADC_CHANNEL ADC_SINGLE_ENDED_INPUT_TEMP
 
-#define REFERENCE_VOLTAGE 1.1
-
 #define RESOLUTION 1000
 #define NUMERATOR ((int32_t)((1 / 0.94) * (1100 / 1024) * RESOLUTION))
 
 // sample every 10 seconds
-#define SENSOR_SAMPLE_TIME 1000
+#define SENSOR_SAMPLE_TIME 500
 
 typedef enum {
     tms_idle,

@@ -13,6 +13,8 @@
 #include <stddef.h>
 #include "CharStringSpan.h"
 
+#define EEPROMStorage_supportThingspeak 0
+
 #define EEPROMStorage_maxNotificationNumbers 4
 
 extern void EEPROMStorage_Initialize (void);
@@ -40,10 +42,10 @@ extern void EEPROMStorage_setTempCalOffset (
     const int16_t offset);
 extern int16_t EEPROMStorage_tempCalOffset (void);
 
-// watchdog timer calibration. unts are 1%
-extern void EEPROMStorage_setWatchdogTimerCal (
-    const uint8_t wdtCal);
-extern uint8_t EEPROMStorage_watchdogTimerCal (void);
+// UTC time zone offset. unts are hours
+extern void EEPROMStorage_setUTCOffset(
+    const int8_t offset);
+extern int8_t EEPROMStorage_utcOffset (void);
 
 // water level monitor task timeout. units are seconds
 extern void EEPROMStorage_setMonitorTaskTimeout (
@@ -74,9 +76,18 @@ extern void EEPROMStorage_setLoggingUpdateDelay (
     const uint16_t updateDelay); // in seconds
 extern uint16_t EEPROMStorage_LoggingUpdateDelay (void);
 
+// 0 is backlight off, 1-9 is increasing levels brightness, 10 is full on
+extern void EEPROMStorage_setLCDMainsOnBrightness (
+    const uint8_t mainsOnBrightness);
+extern uint8_t EEPROMStorage_LCDMainsOnBrightness (void);
+extern void EEPROMStorage_setLCDMainsOffBrightness (
+    const uint8_t mainsOffBrightness);
+extern uint8_t EEPROMStorage_LCDMainsOffBrightness (void);
+
 //
 // Storage for ThingSpeak support.
 //
+#if EEPROMStorage_supportThingspeak
 extern void EEPROMStorage_setThingspeak (
     const bool enabled);
 extern bool EEPROMStorage_thingspeakEnabled (void);
@@ -92,6 +103,7 @@ extern void EEPROMStorage_setThingspeakWriteKey (
     const CharStringSpan_t *writekey);
 extern void EEPROMStorage_getThingspeakWriteKey (
     CharString_t *writekey);
+#endif  /* EEPROMStorage_supportThingspeak */
 
 extern void EEPROMStorage_setIPConsoleEnabled (
     const bool enabled);

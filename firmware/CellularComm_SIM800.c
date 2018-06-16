@@ -831,6 +831,11 @@ uint16_t CellularComm_batteryMillivolts (void)
     return batteryMillivolts;
 }
 
+uint8_t CellularComm_batteryPercent (void)
+{
+    return batteryPercent;
+}
+
 void CellularComm_setOutgoingSMSMessageNumber (
     const CharStringSpan_t* phoneNumber)
 {
