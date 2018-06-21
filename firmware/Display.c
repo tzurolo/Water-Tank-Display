@@ -212,6 +212,7 @@ static const TFT_HXD8357D_Text* textSource (void)
         currentText.y = TFT_HXD8357D_height - DisplayFonts_fontHeight(DisplayFonts_primary());
         CharString_copyP(PSTR("as of "), &currentTextString);
         SystemTime_appendToString(&ts, &currentTextString);
+        CharString_appendC(' ', &currentTextString);
         CharStringSpan_init(&currentTextString, &currentText.chars);
         currentText.bgColor = HX8357_WHITE;
         currentText.fgColor = HX8357_BLACK;
