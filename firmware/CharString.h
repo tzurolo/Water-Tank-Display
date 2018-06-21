@@ -66,8 +66,16 @@ extern void CharString_append (
 extern void CharString_appendP (
     PGM_P srcStr,
     CharString_t* destStr);
+extern void CharString_appendSubstringP (
+    PGM_P substrBegin,
+    const uint8_t substrLen,
+    CharString_t* destStr);
 extern void CharString_appendCS (
     const CharString_t* srcStr,
+    CharString_t* destStr);
+extern void CharString_appendSubstringCS (
+    CharString_Iter substrBegin,
+    const uint8_t substrLen,
     CharString_t* destStr);
 extern void CharString_appendC (
     const char ch,
@@ -138,19 +146,6 @@ inline char CharString_at (
     const int offset)
 {
     return str->body[offset];
-}
-
-inline const char* CharString_right (
-    const CharString_t* str,
-    const int offset)
-{
-    return str->body + offset;
-}
-
-inline char* CharString_buffer (
-    CharString_t* str)
-{
-    return str->body;
 }
 
 #endif  // CHARSTRING_H

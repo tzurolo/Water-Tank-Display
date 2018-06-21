@@ -23,41 +23,32 @@ void CharString_clear (
     str->body[0] = 0;
 }
 
-static void appendHelper (
-    CharString_Iter srcStrBegin,
-    const uint8_t srcStrLen,
-    CharString_t* destStr)
-{
-    const uint8_t capacity = destStr->capacity;
-    const uint8_t remainingCapacity = capacity - destStr->length;
-    const uint8_t charsToAppend =
-        (remainingCapacity < srcStrLen)
-        ? remainingCapacity
-        : srcStrLen;
-    strncpy(destStr->body + destStr->length, srcStrBegin, charsToAppend);
-    destStr->length += charsToAppend;
-    destStr->body[destStr->length] = 0;
-}
-
 void CharString_append (
     const char* srcStr,
     CharString_t* destStr)
 {
-    appendHelper(srcStr, strlen(srcStr), destStr);
+    CharString_appendSubstringCS(srcStr, strlen(srcStr), destStr);
 }
 
 void CharString_appendP (
     PGM_P srcStr,
     CharString_t* destStr)
 {
+    CharString_appendSubstringP(srcStr, strlen_P(srcStr), destStr);
+}
+
+void CharString_appendSubstringP (
+    PGM_P substrBegin,
+    const uint8_t substrLen,
+    CharString_t* destStr)
+{
     const uint8_t capacity = destStr->capacity;
-    const uint8_t srcStrLen = strlen_P(srcStr);
     const uint8_t remainingCapacity = capacity - destStr->length;
     const uint8_t charsToAppend =
-        (remainingCapacity < srcStrLen)
+        (remainingCapacity < substrLen)
         ? remainingCapacity
-        : srcStrLen;
-    strncpy_P(destStr->body + destStr->length, srcStr, charsToAppend);
+        : substrLen;
+    strncpy_P(destStr->body + destStr->length, substrBegin, charsToAppend);
     destStr->length += charsToAppend;
     destStr->body[destStr->length] = 0;
 }
@@ -66,7 +57,23 @@ void CharString_appendCS (
     const CharString_t* srcStr,
     CharString_t* destStr)
 {
-    appendHelper(srcStr->body, srcStr->length, destStr);
+    CharString_appendSubstringCS(srcStr->body, srcStr->length, destStr);
+}
+
+void CharString_appendSubstringCS (
+    CharString_Iter substrBegin,
+    const uint8_t substrLen,
+    CharString_t* destStr)
+{
+    const uint8_t capacity = destStr->capacity;
+    const uint8_t remainingCapacity = capacity - destStr->length;
+    const uint8_t charsToAppend =
+        (remainingCapacity < substrLen)
+        ? remainingCapacity
+        : substrLen;
+    strncpy(destStr->body + destStr->length, substrBegin, charsToAppend);
+    destStr->length += charsToAppend;
+    destStr->body[destStr->length] = 0;
 }
 
 void CharString_appendC (
@@ -87,7 +94,7 @@ void CharString_copyIters (
     CharString_t* destStr)
 {
     CharString_clear(destStr);
-    appendHelper(begin, end - begin, destStr);
+    CharString_appendSubstringCS(begin, end - begin, destStr);
 }
 
 void CharString_appendNewline (

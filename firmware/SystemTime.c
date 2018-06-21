@@ -10,6 +10,7 @@
 #include <avr/wdt.h>
 #include <avr/power.h>
 #include <avr/sleep.h>
+#include <avr/pgmspace.h>
 #include "StringUtils.h"
 #include "Console.h"
 #include "EEPROMStorage.h"
@@ -29,6 +30,8 @@ static SystemTime_TickNotification notificationFunctions[MAX_TICK_NOTIFICATION_F
 static volatile uint8_t taskTickCounter;
 static uint8_t minTaskTickCounter;
 static uint8_t maxTaskTickCounter;
+
+char dayNamesP[] PROGMEM = "SunMonTueWedThuFriSat";
 
 void SystemTime_Initialize (void)
 {
@@ -292,8 +295,8 @@ void SystemTime_appendToString (
     CharString_t* timeString)
 {
     // append day of week
-    StringUtils_appendDecimal(SystemTime_dayOfWeek(time), 1, 0, timeString);
-    CharString_appendC(',', timeString);
+    CharString_appendSubstringP(dayNamesP + (SystemTime_dayOfWeek(time) * 3), 3, timeString);
+    CharString_appendC(' ', timeString);
 
     // append hours
     StringUtils_appendDecimal(SystemTime_hours(time), 2, 0, timeString);

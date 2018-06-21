@@ -54,6 +54,13 @@ void EEPROM_writeString (
     EEPROM_write(charAddr, 0);    // null-terminate
 }
 
+bool EEPROM_haveString (
+    const char* uiAddress)
+{
+    uint8_t* charAddr = (uint8_t*)uiAddress;
+    return EEPROM_read(charAddr) != 0;
+}
+
 void EEPROM_readString (
     const char* uiAddress,
     CharString_t *string)

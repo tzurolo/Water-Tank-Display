@@ -616,8 +616,12 @@ void CellularComm_task (void)
                     ccState = ccs_waitingForInitialCSQResponse;
                 } else {
                     // not registered yet.
-                    ccState = ccs_waitToRecheckCREG;
-                    SystemTime_futureTime(200, &powerupResumeTime);
+                    if (ccEnabled) {
+                        ccState = ccs_waitToRecheckCREG;
+                        SystemTime_futureTime(200, &powerupResumeTime);
+                    } else {
+                        ccState = ccs_idle;
+                    }
                 }
             }
             }

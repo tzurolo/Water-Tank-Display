@@ -20,13 +20,13 @@
 #define HEADER_HEIGHT 30
 
 #define TANK_WIDTH 300
-#define TANK_HEIGHT 250
+#define TANK_HEIGHT 240
 #define TANK_X 90
 #define TANK_Y 40
 #define TANK_WALL_THICKNESS 8
 #define TANK_WALL_COLOR HX8357_BLACK
 
-#define WATER_GAP_AT_TOP 20
+#define WATER_GAP_AT_TOP 15
 #define WATER_HEIGHT (TANK_HEIGHT - (TANK_WALL_THICKNESS + WATER_GAP_AT_TOP))
 
 // water level below this will be displayed on top of water
@@ -64,6 +64,8 @@ static uint8_t lastDisplayBatteryPercent;
 static uint8_t lastDisplaySignalQuality;
 static bool lastDisplayMainsOn;
 static bool lastDisplayPumpOn;
+
+static char spacePadP[] PROGMEM = "   ";
 
 // will be called by TFT_HXD8357D to get the next rectangle to draw, if any
 static const TFT_HXD8357D_Rectangle* rectangleSource (void)
@@ -158,13 +160,14 @@ static const TFT_HXD8357D_Text* textSource (void)
         // time changed - update display
         lastDisplayedTimeSeconds = curTime.seconds;
 
-        currentText.x = TFT_HXD8357D_width - 120;
+        currentText.x = TFT_HXD8357D_width - 160;
         currentText.y = 5;
         CharString_clear(&currentTextString);
         if (curTime.seconds > 43200L) { // max UTC offset
             curTime.seconds += (((int32_t)EEPROMStorage_utcOffset()) * 3600);
         }
         SystemTime_appendToString(&curTime, &currentTextString);
+        CharString_appendC(' ', &currentTextString);
         CharStringSpan_init(&currentTextString, &currentText.chars);
         currentText.bgColor = HX8357_GREEN;
         currentText.fgColor = HX8357_BLACK;
@@ -205,7 +208,7 @@ static const TFT_HXD8357D_Text* textSource (void)
         ts.seconds = waterLevelTimestamp;
         ts.seconds += (((int32_t)EEPROMStorage_utcOffset()) * 3600);
         ts.hundredths = 0;
-        currentText.x = TANK_X;
+        currentText.x = TANK_X + 30;
         currentText.y = TFT_HXD8357D_height - DisplayFonts_fontHeight(DisplayFonts_primary());
         CharString_copyP(PSTR("as of "), &currentTextString);
         SystemTime_appendToString(&ts, &currentTextString);
@@ -235,7 +238,7 @@ static const TFT_HXD8357D_Text* textSource (void)
             currentText.y = 5;
             CharString_copyP(PSTR("B:"), &currentTextString);
             StringUtils_appendDecimal(batteryPercent, 1, 0, &currentTextString);
-            CharString_appendC('%', &currentTextString);
+            CharString_appendP(PSTR("%  "), &currentTextString);
             CharStringSpan_init(&currentTextString, &currentText.chars);
             currentText.bgColor = HX8357_GREEN;
             currentText.fgColor = HX8357_BLACK;
@@ -251,6 +254,7 @@ static const TFT_HXD8357D_Text* textSource (void)
             currentText.y = 5;
             CharString_copyP(PSTR("Q:"), &currentTextString);
             StringUtils_appendDecimal(signalQuality, 1, 0, &currentTextString);
+            CharString_appendP(spacePadP, &currentTextString);
             CharStringSpan_init(&currentTextString, &currentText.chars);
             currentText.bgColor = HX8357_GREEN;
             currentText.fgColor = HX8357_BLACK;
@@ -264,7 +268,11 @@ static const TFT_HXD8357D_Text* textSource (void)
         currentText.x = 170;
         currentText.y = 5;
         CharString_clear(&currentTextString);
-        CharString_appendC(mainsOn ? 'M' : '/', &currentTextString);
+        if (mainsOn) {
+            CharString_appendC('M', &currentTextString);
+        } else {
+            CharString_appendP(spacePadP, &currentTextString);
+        }
         CharStringSpan_init(&currentTextString, &currentText.chars);
         currentText.bgColor = HX8357_GREEN;
         currentText.fgColor = HX8357_RED;
@@ -274,7 +282,11 @@ static const TFT_HXD8357D_Text* textSource (void)
         currentText.x = 195;
         currentText.y = 5;
         CharString_clear(&currentTextString);
-        CharString_appendC(pumpOn ? 'P' : '/', &currentTextString);
+        if (pumpOn) {
+            CharString_appendC('P', &currentTextString);
+        } else {
+            CharString_appendP(spacePadP, &currentTextString);
+        }
         CharStringSpan_init(&currentTextString, &currentText.chars);
         currentText.bgColor = HX8357_GREEN;
         currentText.fgColor = HX8357_BLUE;

@@ -9,6 +9,7 @@
 #include "Console.h"
 #include "StringUtils.h"
 
+#if 0
 // special characters
 const uint16_t powerIcon[] PROGMEM = {
 0b0000000000000000,
@@ -25,7 +26,7 @@ const uint16_t powerIcon[] PROGMEM = {
 0b0000001110000000,
 0b0000001110000000
 };
-
+#endif
 
 const GFXfont* DisplayFonts_primary (void)
 {

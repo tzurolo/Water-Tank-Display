@@ -65,6 +65,17 @@ extern void EEPROMStorage_setAPN (
     const CharStringSpan_t *APN);
 extern void EEPROMStorage_getAPN (
     CharString_t *APN);
+extern void EEPROMStorage_setUsername (
+    const CharStringSpan_t *usern);
+extern bool EEPROMStorage_haveUsername (void);
+extern void EEPROMStorage_getUsername (
+    CharString_t *usern);
+extern void EEPROMStorage_setPassword (
+    const CharStringSpan_t *passw);
+extern bool EEPROMStorage_havePassword (void);
+extern void EEPROMStorage_getPassword (
+    CharString_t *passw);
+
 extern void EEPROMStorage_setCipqsend (
     const uint8_t qsend);
 extern uint8_t EEPROMStorage_cipqsend (void);

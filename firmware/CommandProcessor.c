@@ -252,10 +252,12 @@ bool CommandProcessor_executeCommand (
                 EEPROMStorage_setRebootInterval(rebootInterval);
             }
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, apnP)) {
-            StringUtils_scanToken(&cmd, &cmdToken);
-            if (!CharStringSpan_isEmpty(&cmdToken)) {
-                EEPROMStorage_setAPN(&cmdToken);
-            }
+            StringUtils_scanQuotedString(&cmd, &cmdToken, &cmd);
+            EEPROMStorage_setAPN(&cmdToken);
+            StringUtils_scanQuotedString(&cmd, &cmdToken, &cmd);
+            EEPROMStorage_setUsername(&cmdToken);
+            StringUtils_scanQuotedString(&cmd, &cmdToken, &cmd);
+            EEPROMStorage_setPassword(&cmdToken);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, cipqsendP)) {
             const uint16_t qsend = scanIntegerToken(&cmd, &validCommand);
             if (validCommand) {
@@ -317,7 +319,13 @@ bool CommandProcessor_executeCommand (
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, rebootP)) {
             makeJSONIntValue(rebootP, EEPROMStorage_rebootInterval(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, apnP)) {
-            makeJSONStrValue(apnP, EEPROMStorage_getAPN, reply);
+            beginJSON(reply);
+            appendJSONStrValue(apnP, EEPROMStorage_getAPN, reply);
+            continueJSON(reply);
+            appendJSONStrValue(PSTR("User"), EEPROMStorage_getUsername, reply);
+            continueJSON(reply);
+            appendJSONStrValue(PSTR("Passwd"), EEPROMStorage_getPassword, reply);
+            endJSON(reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, cipqsendP)) {
             makeJSONIntValue(cipqsendP, EEPROMStorage_cipqsend(), reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, ipserverP)) {
