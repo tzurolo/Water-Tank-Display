@@ -166,8 +166,8 @@ static const TFT_HXD8357D_Text* textSource (void)
         if (curTime.seconds > 43200L) { // max UTC offset
             curTime.seconds += (((int32_t)EEPROMStorage_utcOffset()) * 3600);
         }
-        SystemTime_appendToString(&curTime, &currentTextString);
-        CharString_appendC(' ', &currentTextString);
+        SystemTime_appendToString(&curTime, true, &currentTextString);
+        CharString_appendP(PSTR("  "), &currentTextString);
         CharStringSpan_init(&currentTextString, &currentText.chars);
         currentText.bgColor = HX8357_GREEN;
         currentText.fgColor = HX8357_BLACK;
@@ -211,8 +211,8 @@ static const TFT_HXD8357D_Text* textSource (void)
         currentText.x = TANK_X + 30;
         currentText.y = TFT_HXD8357D_height - DisplayFonts_fontHeight(DisplayFonts_primary());
         CharString_copyP(PSTR("as of "), &currentTextString);
-        SystemTime_appendToString(&ts, &currentTextString);
-        CharString_appendC(' ', &currentTextString);
+        SystemTime_appendToString(&ts, true, &currentTextString);
+        CharString_appendP(PSTR("  "), &currentTextString);
         CharStringSpan_init(&currentTextString, &currentText.chars);
         currentText.bgColor = HX8357_WHITE;
         currentText.fgColor = HX8357_BLACK;

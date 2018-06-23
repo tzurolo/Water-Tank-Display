@@ -107,6 +107,7 @@ extern uint8_t SystemTime_seconds (
 // writes given time as D:HH:MM:SS
 extern void SystemTime_appendToString (
     const SystemTime_t *time,
+    const bool weekdayName,
     CharString_t* timeString);
 
 #endif  // SYSTEMTIME_H

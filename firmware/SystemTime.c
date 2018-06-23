@@ -292,11 +292,17 @@ uint8_t SystemTime_seconds (
 
 void SystemTime_appendToString (
     const SystemTime_t *time,
+    const bool weekdayName,
     CharString_t* timeString)
 {
     // append day of week
-    CharString_appendSubstringP(dayNamesP + (SystemTime_dayOfWeek(time) * 3), 3, timeString);
-    CharString_appendC(' ', timeString);
+    if (weekdayName) {
+        CharString_appendSubstringP(dayNamesP + (SystemTime_dayOfWeek(time) * 3), 3, timeString);
+        CharString_appendC(' ', timeString);
+    } else {
+        StringUtils_appendDecimal(SystemTime_dayOfWeek(time), 1, 0, timeString);
+        CharString_appendC(',', timeString);
+    }
 
     // append hours
     StringUtils_appendDecimal(SystemTime_hours(time), 2, 0, timeString);

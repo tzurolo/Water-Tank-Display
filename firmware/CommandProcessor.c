@@ -57,7 +57,7 @@ void CommandProcessor_createStatusMessage (
     CharString_clear(msg);
     SystemTime_t curTime;
     SystemTime_getCurrentTime(&curTime);
-    SystemTime_appendToString(&curTime, msg);
+    SystemTime_appendToString(&curTime, false, msg);
     CharString_appendP(PSTR(",st:"), msg);
     StringUtils_appendDecimal(CellularComm_state(), 2, 0, msg);
     if (CellularComm_stateIsTCPIPSubtask(CellularComm_state())) {
@@ -156,7 +156,7 @@ static void appendJSONTimeValue (
     CharString_appendC('\"', str);
     CharString_appendP(name, str);
     CharString_appendP(PSTR("\":\""), str);
-    SystemTime_appendToString(time, str);
+    SystemTime_appendToString(time, false, str);
     CharString_appendC('\"', str);
 }
 
