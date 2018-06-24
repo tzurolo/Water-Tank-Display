@@ -347,12 +347,16 @@ static bool continueText (void)
     const uint8_t c = (*currentTextIter) - (uint8_t)pgm_read_byte(&currentFont->first);
     GFXglyph *glyph  = &(((GFXglyph *)pgm_read_word(&currentFont->glyph))[c]);
     uint8_t  *bitmap = (uint8_t *)pgm_read_word(&currentFont->bitmap);
+    int8_t yTop = pgm_read_byte(&currentFont->yTop);
+    int8_t yBottom = pgm_read_byte(&currentFont->yBottom);
 
+    uint8_t h = DisplayFonts_fontHeight(currentFont);
     uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
-    uint8_t  w  = pgm_read_byte(&glyph->width);
-    uint8_t  h  = pgm_read_byte(&glyph->height);
-    int8_t   xo = pgm_read_byte(&glyph->xOffset);
-    int8_t   yo = pgm_read_byte(&glyph->yOffset);
+    uint8_t  gw  = pgm_read_byte(&glyph->width);
+    uint8_t  gh  = pgm_read_byte(&glyph->height);
+    uint8_t  w  = pgm_read_byte(&glyph->xAdvance);
+    int8_t   gxo = pgm_read_byte(&glyph->xOffset);
+    int8_t   gyo = pgm_read_byte(&glyph->yOffset);
     uint8_t  bits = 0;
     uint8_t  bit = 0;
 
@@ -367,8 +371,20 @@ static bool continueText (void)
 
     writeCommand(HX8357_RAMWR); // write to RAM
 
-    for(int yy=0; yy<h; yy++) {
-        for(int xx=0; xx<w; xx++) {
+    // write blank space above glyph, if any
+    const uint16_t spaceAbove = gyo - yTop;
+    if (spaceAbove > 0) {
+        spiWrite16(currentTextBGColor, spaceAbove * w);
+    }
+
+    for(int yy=0; yy<gh; yy++) {
+        // write blank space to the left of the glyph, if any
+        if (gxo > 0) {
+            spiWrite16(currentTextBGColor, gxo);
+        }
+
+        // write a row of the glyph
+        for(int xx=0; xx<gw; xx++) {
             if(!(bit++ & 7)) {
                 bits = pgm_read_byte(&bitmap[bo++]);
             }
@@ -378,9 +394,21 @@ static bool continueText (void)
                        : currentTextBGColor, 1);
             bits <<= 1;
         }
+
+        // write blank space to the left of the glyph, if any
+        const uint8_t spaceRight = w - (gxo + gw);
+        if (spaceRight > 0) {
+            spiWrite16(currentTextBGColor, spaceRight);
+        }
     }
 
-    currentCharX += (uint8_t)pgm_read_byte(&glyph->xAdvance);
+    // write blank space below glyph, if any
+    const uint16_t spaceBelow = yBottom - (gyo + gh);
+    if (spaceBelow > 0) {
+        spiWrite16(currentTextBGColor, spaceBelow * w);
+    }
+
+    currentCharX += w;
     ++currentTextIter;
     if (currentTextIter == currentTextEndIter) {
         // all chars have been written

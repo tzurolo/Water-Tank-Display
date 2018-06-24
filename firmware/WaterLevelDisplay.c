@@ -55,7 +55,6 @@ static SystemTime_t time;   // used to measure how long it took to get a connect
 static bool gotCommandFromHost;
 static SystemTime_t connectStartTime;
 static CharStringSpan_t remainingReplyDataToSend;
-static uint8_t latestWaterLevelPercent;
 
 #define DATA_SENDER_BUFFER_LEN 40
 
@@ -343,9 +342,3 @@ WaterLevelDisplayState WaterLevelDisplay_state (void)
     return wldState;
 }
 
-void WaterLevelDisplay_setDataFromHost (
-    const uint8_t waterLevelPct)
-{
-    latestWaterLevelPercent = waterLevelPct;
-    Display_setWaterLevel(waterLevelPct);
-}
