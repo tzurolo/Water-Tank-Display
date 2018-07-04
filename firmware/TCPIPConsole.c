@@ -82,7 +82,7 @@ void TCPIPConsole_task (void)
                     break;
                 case cs_disconnected :
                     if (isEnabled && SystemTime_timeHasArrived(&nextConnectAttemptTime)) {
-                        CharString_define(40, server);
+                        CharString_define(60, server);
                         EEPROMStorage_getIPConsoleServerAddress(&server);
                         const uint16_t port = EEPROMStorage_ipConsoleServerPort();
                         CellularTCPIP_connect(&server, port, dataReceiver, statusCallback);

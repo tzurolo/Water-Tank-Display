@@ -31,7 +31,7 @@
 typedef void (*StringProvider)(
     CharString_t *string);
 
-CharString_define(60, CommandProcessor_incomingCommand)
+CharString_define(80, CommandProcessor_incomingCommand)
 CharString_define(100, CommandProcessor_commandReply)
 
 // command keywords

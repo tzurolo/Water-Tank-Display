@@ -22,7 +22,7 @@ uint16_t EEMEM rebootInterval = 1440;   // one day
 char EEMEM cellPIN[8]  = "7353";
 char tzPinP[]  PROGMEM = "7353"; // Tony's telestial Sim card PIN
 int16_t EEMEM tempCalOffset = 327;
-int8_t EEMEM utcOffset = -4;
+int8_t EEMEM utcOffset = 3;
 uint16_t EEMEM monitorTaskTimeout = 90;
 uint8_t EEMEM notification = 0;
 uint16_t EEMEM loggingUpdateInterval = 600;
@@ -53,7 +53,7 @@ char EEMEM thingspeakWriteKey[20] = "DD7TVSCZEHKZLAQP";
 
 // TCPIP Console
 uint8_t EEMEM ipConsoleEnabled = 1;
-char EEMEM ipConsoleServerAddress[32] = "tonyz.dyndns.org";
+char EEMEM ipConsoleServerAddress[60] = "tonyz.dyndns.org";
 char tzHostAddressP[]         PROGMEM = "tonyz.dyndns.org";
 uint16_t EEMEM ipConsoleServerPort = 3010;
 
@@ -88,7 +88,7 @@ void EEPROMStorage_Initialize (void)
         EEPROMStorage_setCipqsend(0);
 
         EEPROMStorage_setTempCalOffset(279);
-        EEPROMStorage_setUTCOffset(-4);
+        EEPROMStorage_setUTCOffset(3);
         EEPROMStorage_setMonitorTaskTimeout(90);
 
         EEPROMStorage_setNotification(false);
