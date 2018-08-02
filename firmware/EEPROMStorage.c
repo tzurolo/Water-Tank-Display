@@ -16,12 +16,12 @@
 // storage address map
 uint8_t EEMEM initFlag = 1; // initialization flag. Unprogrammed EE comes up as all one's
 
-uint16_t EEMEM unitID = 0;
+uint16_t EEMEM unitID = 3;
 uint32_t EEMEM lastRebootTimeSec = 0;
 uint16_t EEMEM rebootInterval = 1440;   // one day
 char EEMEM cellPIN[8]  = "7353";
 char tzPinP[]  PROGMEM = "7353"; // Tony's telestial Sim card PIN
-int16_t EEMEM tempCalOffset = 327;
+int16_t EEMEM tempCalOffset = 279;
 int8_t EEMEM utcOffset = 3;
 uint16_t EEMEM monitorTaskTimeout = 90;
 uint8_t EEMEM notification = 0;
@@ -53,8 +53,8 @@ char EEMEM thingspeakWriteKey[20] = "DD7TVSCZEHKZLAQP";
 
 // TCPIP Console
 uint8_t EEMEM ipConsoleEnabled = 1;
-char EEMEM ipConsoleServerAddress[60] = "tonyz.dyndns.org";
-char tzHostAddressP[]         PROGMEM = "tonyz.dyndns.org";
+char EEMEM ipConsoleServerAddress[60] = "lojwater.dyndns.org";
+char tzHostAddressP[]         PROGMEM = "lojwater.dyndns.org";
 uint16_t EEMEM ipConsoleServerPort = 3010;
 
 static void getCharStringSpanFromP (

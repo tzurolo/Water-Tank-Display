@@ -49,6 +49,7 @@ static char wlmTimeoutP[]       PROGMEM = "wlmTimeout";
 static char rebootP[]           PROGMEM = "reboot";
 static char sampleIntervalP[]   PROGMEM = "sampleInterval";
 static char logIntervalP[]      PROGMEM = "logInterval";
+static char logDelayP[]         PROGMEM = "logDelay";
 static char thingspeakP[]       PROGMEM = "thingspeak";
 
 void CommandProcessor_createStatusMessage (
@@ -275,6 +276,11 @@ bool CommandProcessor_executeCommand (
             if (validCommand) {
                 EEPROMStorage_setLoggingUpdateInterval(loggingInterval);
             }
+        } else if (CharStringSpan_equalsNocaseP(&cmdToken, logDelayP)) {
+            const uint16_t loggingUpdateDelay = scanIntegerToken(&cmd, &validCommand);
+            if (validCommand) {
+                EEPROMStorage_setLoggingUpdateDelay(loggingUpdateDelay);
+            }
 #if EEPROMStorage_supportThingspeak
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, thingspeakP)) {
             StringUtils_scanToken(&cmd, &cmdToken);
@@ -336,6 +342,11 @@ bool CommandProcessor_executeCommand (
             endJSON(reply);
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, logIntervalP)) {
             makeJSONIntValue(logIntervalP, EEPROMStorage_LoggingUpdateInterval(), reply);
+            beginJSON(reply);
+            appendJSONIntValue(PSTR("Interval"), EEPROMStorage_LoggingUpdateInterval(), reply);
+            continueJSON(reply);
+            appendJSONIntValue(PSTR("Delay"), EEPROMStorage_LoggingUpdateDelay(), reply);
+            endJSON(reply);
 #if EEPROMStorage_supportThingspeak
         } else if (CharStringSpan_equalsNocaseP(&cmdToken, thingspeakP)) {
             beginJSON(reply);

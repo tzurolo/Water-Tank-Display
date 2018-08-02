@@ -29,12 +29,12 @@
 #define MAINS_SAMPLE_INTERVAL 50
 
 // ADC result counts between mains off and mains on
-// volage divider is 2.6K and 8K, ratio is 0.24. The ADC
+// volage divider is 2.6K and 8K, ratio is 0.245. The ADC
 // voltage reference is set to 2.56 volts, so 5V on the USB pin
-// should give a result count of about 500. 4.2V on the USB pin
-// (max battery voltage) should give a result count of about 410.
+// should give a result count of about 490. 4.2V on the USB pin
+// (max battery voltage) should give a result count of about 412.
 // we pick a value in the middle of those two result counts
-#define MAINS_ON_ADC_VALUE 455
+#define MAINS_ON_ADC_VALUE 451
 
 #define OPTOISOLATOR_DDR        DDRF
 #define OPTOISOLATOR_INPORT     PINF
